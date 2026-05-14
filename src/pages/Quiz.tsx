@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Card,
   Button,
@@ -11,6 +12,15 @@ import {
   Badge,
 } from '@mantine/core'
 import { useQuiz } from '../context/QuizContext'
+import { CodeRenderer } from '../components/CodeRenderer'
+import {
+  slideVariants,
+  staggerContainerFast,
+  fadeInLeft,
+  shakeVariants,
+  springTransition,
+  usePrefersReducedMotion,
+} from '../lib/animations'
 
 export function Quiz() {
   const { category, sheet } = useParams<{ category?: string; sheet?: string }>()
@@ -20,7 +30,6 @@ export function Quiz() {
     answers,
     submittedAnswers,
     setAnswer,
-    skipQuestion,
     submitQuiz,
     loading,
     error,
@@ -32,6 +41,8 @@ export function Quiz() {
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [hoveredOption, setHoveredOption] = useState<number | null>(null)
+  const [direction, setDirection] = useState(0)
+  const reducedMotion = usePrefersReducedMotion()
 
   useEffect(() => {
     if (category) {
@@ -91,12 +102,14 @@ export function Quiz() {
 
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
+      setDirection(1)
       setCurrentIndex((prev) => prev + 1)
     }
   }
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
+      setDirection(-1)
       setCurrentIndex((prev) => prev - 1)
     }
   }
@@ -127,125 +140,128 @@ export function Quiz() {
         transitionDuration={200}
       />
 
-      <Card shadow="sm" padding="xl" radius="md" withBorder>
-        <Stack gap="lg">
-          <Text fw={600} size="lg" lh={1.5}>
-            {currentQuestion.question}
-          </Text>
+      <AnimatePresence mode="wait" custom={direction}>
+        <motion.div
+          key={currentQuestion.id}
+          custom={direction}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={springTransition}
+        >
+          <Card shadow="sm" padding="xl" radius="md" withBorder>
+            <Stack gap="lg">
+              <CodeRenderer text={currentQuestion.question} maxCodeWidth={600} textSize="lg" />
 
-          <Stack gap="xs">
-            {currentQuestion.options.map((option, idx) => {
-              const selected = answers[currentQuestion.id] === idx
-              const isHovered = hoveredOption === idx
-              const isSubmitted = submittedAnswers[currentQuestion.id]
-              const isCorrect = idx === currentQuestion.answer
+              <Stack gap="xs">
+                {currentQuestion.options.map((option, idx) => {
+                  const selected = answers[currentQuestion.id] === idx
+                  const isHovered = hoveredOption === idx
+                  const isSubmitted = submittedAnswers[currentQuestion.id]
+                  const isCorrect = idx === currentQuestion.answer
 
-              let bg: string | undefined = undefined
-              let borderColor: string | undefined = undefined
+                  let bg: string | undefined = undefined
+                  let borderColor: string | undefined = undefined
 
-              if (isSubmitted) {
-                if (isCorrect) {
-                  bg = 'rgba(32, 201, 151, 0.08)'
-                  borderColor = 'var(--mantine-color-teal-6)'
-                } else if (selected) {
-                  bg = 'rgba(250, 82, 82, 0.08)'
-                  borderColor = 'var(--mantine-color-red-6)'
-                } else {
-                  borderColor = 'var(--mantine-color-dark-6)'
-                }
-              } else {
-                bg = selected
-                  ? 'var(--mantine-color-dark-6)'
-                  : isHovered
-                    ? 'var(--mantine-color-dark-5)'
-                    : undefined
-                borderColor = selected
-                  ? 'var(--mantine-color-teal-6)'
-                  : isHovered
-                    ? 'var(--mantine-color-teal-8)'
-                    : 'var(--mantine-color-dark-6)'
-              }
+                  if (isSubmitted) {
+                    if (isCorrect) {
+                      bg = 'rgba(32, 201, 151, 0.08)'
+                      borderColor = 'var(--mantine-color-teal-6)'
+                    } else if (selected) {
+                      bg = 'rgba(250, 82, 82, 0.08)'
+                      borderColor = 'var(--mantine-color-red-6)'
+                    } else {
+                      borderColor = 'var(--mantine-color-dark-6)'
+                    }
+                  } else {
+                    bg = selected
+                      ? 'var(--mantine-color-dark-6)'
+                      : isHovered
+                        ? 'var(--mantine-color-dark-5)'
+                        : undefined
+                    borderColor = selected
+                      ? 'var(--mantine-color-teal-6)'
+                      : isHovered
+                        ? 'var(--mantine-color-teal-8)'
+                        : 'var(--mantine-color-dark-6)'
+                  }
 
-              return (
+                  return (
+                    <Card
+                      key={idx}
+                      padding="md"
+                      radius="md"
+                      withBorder
+                      bg={bg}
+                      style={{
+                        borderColor,
+                        cursor: isSubmitted ? 'default' : 'pointer',
+                        transition: 'all 120ms ease',
+                      }}
+                      onClick={() => {
+                        if (!isSubmitted) setAnswer(currentQuestion.id, idx)
+                      }}
+                      onMouseEnter={() => {
+                        if (!isSubmitted) setHoveredOption(idx)
+                      }}
+                      onMouseLeave={() => setHoveredOption(null)}
+                    >
+                      <Group justify="space-between" wrap="nowrap">
+                        <Text fw={selected ? 600 : 400} size="sm">
+                          {option}
+                        </Text>
+                        {isSubmitted && isCorrect && (
+                          <Badge color="teal" size="xs" variant="filled">
+                            Correct
+                          </Badge>
+                        )}
+                        {isSubmitted && selected && !isCorrect && (
+                          <Badge color="red" size="xs" variant="filled">
+                            Your answer
+                          </Badge>
+                        )}
+                      </Group>
+                    </Card>
+                  )
+                })}
+              </Stack>
+
+              {submittedAnswers[currentQuestion.id] && (
                 <Card
-                  key={idx}
-                  padding="md"
+                  padding="sm"
                   radius="md"
-                  withBorder
-                  bg={bg}
                   style={{
-                    borderColor,
-                    cursor: isSubmitted ? 'default' : 'pointer',
-                    transition: 'all 120ms ease',
+                    background: 'var(--mantine-color-dark-7)',
+                    border: '1px solid var(--mantine-color-dark-6)',
                   }}
-                  onClick={() => {
-                    if (!isSubmitted) setAnswer(currentQuestion.id, idx)
-                  }}
-                  onMouseEnter={() => {
-                    if (!isSubmitted) setHoveredOption(idx)
-                  }}
-                  onMouseLeave={() => setHoveredOption(null)}
                 >
-                  <Group justify="space-between" wrap="nowrap">
-                    <Text fw={selected ? 600 : 400} size="sm">
-                      {option}
+                  <Text size="xs" c="dimmed">
+                    <Text span fw={600} c="gray.4">
+                      Correct answer:
+                    </Text>{' '}
+                    {currentQuestion.options[currentQuestion.answer]}
+                  </Text>
+                  {currentQuestion.explanation && (
+                    <Text size="xs" c="dimmed" mt={4}>
+                      <Text span fw={600} c="gray.4">
+                        Explanation:
+                      </Text>{' '}
+                      {currentQuestion.explanation}
                     </Text>
-                    {isSubmitted && isCorrect && (
-                      <Badge color="teal" size="xs" variant="filled">
-                        Correct
-                      </Badge>
-                    )}
-                    {isSubmitted && selected && !isCorrect && (
-                      <Badge color="red" size="xs" variant="filled">
-                        Your answer
-                      </Badge>
-                    )}
-                  </Group>
+                  )}
                 </Card>
-              )
-            })}
-          </Stack>
+              )}
 
-          {submittedAnswers[currentQuestion.id] && (
-            <Card
-              padding="sm"
-              radius="md"
-              style={{
-                background: 'var(--mantine-color-dark-7)',
-                border: '1px solid var(--mantine-color-dark-6)',
-              }}
-            >
-              <Text size="xs" c="dimmed">
-                <Text span fw={600} c="gray.4">
-                  Correct answer:
-                </Text>{' '}
-                {currentQuestion.options[currentQuestion.answer]}
-              </Text>
-              {currentQuestion.explanation && (
-                <Text size="xs" c="dimmed" mt={4}>
-                  <Text span fw={600} c="gray.4">
-                    Explanation:
-                  </Text>{' '}
-                  {currentQuestion.explanation}
+              {!submittedAnswers[currentQuestion.id] && (
+                <Text size="xs" c="dimmed" ta="center" style={{ fontStyle: 'italic' }}>
+                  Select an answer to continue
                 </Text>
               )}
-            </Card>
-          )}
-
-          {!submittedAnswers[currentQuestion.id] && (
-            <Group justify="flex-end">
-              <Button
-                variant="subtle"
-                color="gray"
-                size="sm"
-                onClick={() => skipQuestion(currentQuestion.id)}
-              >
-                Skip Question
-              </Button>
-            </Group>
-          )}
-        </Stack>
-      </Card>
+            </Stack>
+          </Card>
+        </motion.div>
+      </AnimatePresence>
 
       <Group justify="space-between">
         <Button
@@ -267,7 +283,12 @@ export function Quiz() {
             Submit
           </Button>
         ) : (
-          <Button onClick={handleNext} color="teal" size="md">
+          <Button
+            onClick={handleNext}
+            color="teal"
+            size="md"
+            disabled={answers[currentQuestion.id] === undefined}
+          >
             Next
           </Button>
         )}
