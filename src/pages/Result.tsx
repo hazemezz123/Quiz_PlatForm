@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Button, Text, Stack, Progress, RingProgress, Box, Badge, Group } from '@mantine/core'
-import { Trophy, Crown, Medal, Star, Award, Check, X } from 'lucide-react'
+import { Trophy, Check, X } from 'lucide-react'
 import { useQuiz } from '../context/QuizContext'
+import { getDegree } from '../lib/degrees'
 import {
   scaleIn,
   fadeInUp,
@@ -22,7 +23,7 @@ export function Result() {
 
   const handleRetake = () => {
     resetQuiz()
-    navigate('/home')
+    navigate('/')
   }
 
   if (score === null) {
@@ -30,7 +31,7 @@ export function Result() {
       <Card shadow="sm" padding="lg" radius="md" withBorder>
         <Stack gap="md">
           <Text>No quiz results available.</Text>
-          <Button onClick={() => navigate('/home')} variant="light" color="teal">
+          <Button onClick={() => navigate('/')} variant="light" color="teal">
             Go Home
           </Button>
         </Stack>
@@ -45,18 +46,6 @@ export function Result() {
   if (percentage < 50) ringColor = 'red'
   else if (percentage < 80) ringColor = 'yellow'
 
-  const getDegree = (pct: number) => {
-    if (pct === 100) return { label: 'Legend', color: 'yellow', icon: <Crown size={16} /> }
-    if (pct >= 95) return { label: 'Grandmaster', color: 'orange', icon: <Crown size={16} /> }
-    if (pct >= 90) return { label: 'Master', color: 'teal', icon: <Trophy size={16} /> }
-    if (pct >= 85) return { label: 'Expert', color: 'cyan', icon: <Medal size={16} /> }
-    if (pct >= 80) return { label: 'Advanced', color: 'blue', icon: <Award size={16} /> }
-    if (pct >= 70) return { label: 'Proficient', color: 'indigo', icon: <Star size={16} /> }
-    if (pct >= 60) return { label: 'Competent', color: 'violet', icon: <Star size={16} /> }
-    if (pct >= 50) return { label: 'Beginner', color: 'grape', icon: <Award size={16} /> }
-    return { label: 'Novice', color: 'gray', icon: <Award size={16} /> }
-  }
-
   const degree = getDegree(percentage)
 
   return (
@@ -67,11 +56,7 @@ export function Result() {
 
       <Card shadow="sm" padding="xl" radius="md" withBorder maw={480} mx="auto" w="100%">
         <Stack align="center" gap="xl">
-          <motion.div
-            variants={scaleIn}
-            initial="hidden"
-            animate="visible"
-          >
+          <motion.div variants={scaleIn} initial="hidden" animate="visible">
             <RingProgress
               size={160}
               thickness={12}
@@ -148,7 +133,7 @@ export function Result() {
             leftSection={<Check size={14} />}
             onClick={() => setFilter('correct')}
           >
-            Correct ({questions.filter(q => answers[q.id] === q.answer).length})
+            Correct ({questions.filter((q) => answers[q.id] === q.answer).length})
           </Button>
           <Button
             variant={filter === 'wrong' ? 'filled' : 'outline'}
@@ -157,7 +142,7 @@ export function Result() {
             leftSection={<X size={14} />}
             onClick={() => setFilter('wrong')}
           >
-            Wrong ({questions.filter(q => answers[q.id] !== q.answer).length})
+            Wrong ({questions.filter((q) => answers[q.id] !== q.answer).length})
           </Button>
         </Group>
 
@@ -168,7 +153,11 @@ export function Result() {
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          style={{ display: 'flex', flexDirection: 'column', gap: 'var(--mantine-spacing-md)' }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--mantine-spacing-md)',
+          }}
         >
           <AnimatePresence mode="popLayout">
             {questions
@@ -181,20 +170,13 @@ export function Result() {
                 const originalIndex = questions.indexOf(q)
                 const userAnswer = answers[q.id]
                 const isCorrect = userAnswer === q.answer
-                const isSkipped = userAnswer === undefined
+                const isSkipped = userAnswer === -1
 
                 let statusBadge = (
                   <Badge color={isCorrect ? 'teal' : 'red'} variant="light" size="sm">
-                    {isCorrect ? 'Correct' : 'Wrong'}
+                    {isCorrect ? 'Correct' : isSkipped ? 'Wrong (Skipped)' : 'Wrong'}
                   </Badge>
                 )
-                if (isSkipped) {
-                  statusBadge = (
-                    <Badge color="gray" variant="light" size="sm">
-                      Skipped
-                    </Badge>
-                  )
-                }
 
                 return (
                   <motion.div
@@ -235,7 +217,10 @@ export function Result() {
                               <motion.div
                                 key={optIdx}
                                 initial={false}
-                                animate={{ background: bg, borderColor: border.replace('1px solid ', '') }}
+                                animate={{
+                                  background: bg,
+                                  borderColor: border.replace('1px solid ', ''),
+                                }}
                                 transition={springTransition}
                                 style={{
                                   borderRadius: 'var(--mantine-radius-md)',
@@ -287,7 +272,7 @@ export function Result() {
           </AnimatePresence>
         </motion.div>
 
-        {questions.filter(q => {
+        {questions.filter((q) => {
           if (filter === 'correct') return answers[q.id] === q.answer
           if (filter === 'wrong') return answers[q.id] !== q.answer
           return true

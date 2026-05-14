@@ -1,8 +1,10 @@
+import { CategoryId } from '../lib/categories'
+
 export type QuestionType = 'mcq' | 'truefalse'
 
 export interface Question {
   id: string
-  category: string
+  category: CategoryId
   sheet?: string
   type: QuestionType
   question: string
@@ -11,13 +13,19 @@ export interface Question {
   explanation: string
 }
 
+export interface Sheet {
+  name: string
+  category: CategoryId
+  created_at?: string
+}
+
 export interface Score {
   id: string
   user_name: string
   score: number
   total_questions: number
   percentage: number
-  category: string | null
+  category: CategoryId | null
   sheet: string | null
   created_at: string
 }

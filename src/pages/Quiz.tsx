@@ -1,17 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Card,
-  Button,
-  Text,
-  Stack,
-  Group,
-  Badge,
-  Box,
-} from '@mantine/core'
+import { Card, Button, Text, Stack, Group, Badge, Box } from '@mantine/core'
 import { useQuiz } from '../context/QuizContext'
 import { CodeRenderer } from '../components/CodeRenderer'
+import { CategoryId } from '../lib/categories'
 import {
   slideVariants,
   staggerContainerFast,
@@ -21,13 +14,17 @@ import {
 } from '../lib/animations'
 
 export function Quiz() {
-  const { category, sheet } = useParams<{ category?: string; sheet?: string }>()
+  const { category, sheet } = useParams<{
+    category?: string
+    sheet?: string
+  }>()
   const navigate = useNavigate()
   const {
     questions,
     answers,
     submittedAnswers,
     setAnswer,
+    skipQuestion,
     submitQuiz,
     error,
     currentCategory,
@@ -43,7 +40,7 @@ export function Quiz() {
 
   useEffect(() => {
     if (category) {
-      const decodedCategory = decodeURIComponent(category)
+      const decodedCategory = decodeURIComponent(category) as CategoryId
       if (currentCategory !== decodedCategory) {
         startQuiz(decodedCategory)
       }
@@ -64,7 +61,7 @@ export function Quiz() {
       <Card shadow="sm" padding="lg" radius="md" withBorder>
         <Stack gap="md">
           <Text c="red">{error}</Text>
-          <Button onClick={() => navigate('/home')} variant="light" color="teal">
+          <Button onClick={() => navigate('/')} variant="light" color="teal">
             Back to Home
           </Button>
         </Stack>
@@ -77,7 +74,7 @@ export function Quiz() {
       <Card shadow="sm" padding="lg" radius="md" withBorder>
         <Stack gap="md">
           <Text>No questions available for this category.</Text>
-          <Button onClick={() => navigate('/home')} variant="light" color="teal">
+          <Button onClick={() => navigate('/')} variant="light" color="teal">
             Back to Home
           </Button>
         </Stack>
@@ -120,7 +117,14 @@ export function Quiz() {
         </Text>
       </Group>
 
-      <Box style={{ width: '100%', background: 'var(--mantine-color-dark-6)', borderRadius: 'var(--mantine-radius-xl)', overflow: 'hidden' }}>
+      <Box
+        style={{
+          width: '100%',
+          background: 'var(--mantine-color-dark-6)',
+          borderRadius: 'var(--mantine-radius-xl)',
+          overflow: 'hidden',
+        }}
+      >
         <motion.div
           style={{
             height: '8px',
@@ -151,7 +155,11 @@ export function Quiz() {
                 variants={staggerContainerFast}
                 initial="hidden"
                 animate="visible"
-                style={{ display: 'flex', flexDirection: 'column', gap: 'var(--mantine-spacing-xs)' }}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--mantine-spacing-xs)',
+                }}
               >
                 {currentQuestion.options.map((option, idx) => {
                   const selected = answers[currentQuestion.id] === idx
@@ -198,9 +206,7 @@ export function Quiz() {
                             : {}
                       }
                       transition={
-                        isSubmitted && selected && !isCorrect
-                          ? { duration: 0.4 }
-                          : springTransition
+                        isSubmitted && selected && !isCorrect ? { duration: 0.4 } : springTransition
                       }
                     >
                       <Card
@@ -278,9 +284,22 @@ export function Quiz() {
               </AnimatePresence>
 
               {!submittedAnswers[currentQuestion.id] && (
-                <Text size="xs" c="dimmed" ta="center" style={{ fontStyle: 'italic' }}>
-                  Select an answer to continue
-                </Text>
+                <Group justify="center" gap="xs">
+                  <Text size="xs" c="dimmed" ta="center" style={{ fontStyle: 'italic' }}>
+                    Select an answer or skip to continue
+                  </Text>
+                  <Button
+                    variant="subtle"
+                    color="gray"
+                    size="xs"
+                    onClick={() => {
+                      skipQuestion(currentQuestion.id)
+                      if (!isLastQuestion) handleNext()
+                    }}
+                  >
+                    Skip
+                  </Button>
+                </Group>
               )}
             </Stack>
           </Card>
@@ -288,12 +307,7 @@ export function Quiz() {
       </AnimatePresence>
 
       <Group justify="space-between">
-        <Button
-          variant="default"
-          onClick={handlePrevious}
-          disabled={currentIndex === 0}
-          size="md"
-        >
+        <Button variant="default" onClick={handlePrevious} disabled={currentIndex === 0} size="md">
           Previous
         </Button>
 

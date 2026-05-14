@@ -21,7 +21,7 @@ import {
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Trash, Pencil, Search, Plus, ArrowLeft } from 'lucide-react'
-import { Question, QuestionType } from '../types'
+import { Question, QuestionType, Sheet } from '../types'
 import { CodeRenderer } from '../components/CodeRenderer'
 import {
   fetchAllQuestions,
@@ -30,9 +30,13 @@ import {
   updateQuestion,
   deleteSheet as deleteSheetApi,
   renameSheet,
+  insertSheet,
+  fetchSheets,
+  updateSheetCategory,
 } from '../lib/supabaseClient'
+import { CATEGORY_IDS, CategoryId } from '../lib/categories'
 
-const ADMIN_PASSWORD = 'hazemezz123123'
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
 const ADMIN_KEY = 'quiz_admin_auth'
 
 /* ------------------------------------------------------------------ */
@@ -51,7 +55,7 @@ const EditQuestionModal = memo(function EditQuestionModal({
   question,
   onSave,
 }: EditModalProps) {
-  const [category, setCategory] = useState('')
+  const [category, setCategory] = useState<CategoryId | null>(null)
   const [sheet, setSheet] = useState('')
   const [type, setType] = useState<QuestionType>('mcq')
   const [questionText, setQuestionText] = useState('')
@@ -61,7 +65,7 @@ const EditQuestionModal = memo(function EditQuestionModal({
 
   useEffect(() => {
     if (question) {
-      setCategory(question.category)
+      setCategory(question.category as CategoryId)
       setSheet(question.sheet || '')
       setType(question.type)
       setQuestionText(question.question)
@@ -73,6 +77,10 @@ const EditQuestionModal = memo(function EditQuestionModal({
 
   const handleUpdate = async () => {
     if (!question) return
+    if (!category) {
+      alert('Category is required')
+      return
+    }
     let parsedOptions: string[]
     try {
       parsedOptions = JSON.parse(options)
@@ -93,18 +101,20 @@ const EditQuestionModal = memo(function EditQuestionModal({
       })
       onSave()
       onClose()
-    } catch (err: any) {
-      alert(err.message || 'Failed to update')
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to update')
     }
   }
 
   return (
     <Modal opened={opened} onClose={onClose} title="Edit Question" size="lg">
       <Stack gap="md">
-        <TextInput
+        <Select
           label="Category"
+          data={CATEGORY_IDS.map((c) => ({ value: c, label: c }))}
           value={category}
-          onChange={(e) => setCategory(e.currentTarget.value)}
+          onChange={(val) => setCategory(val as CategoryId)}
+          required
         />
         <TextInput
           label="Sheet"
@@ -232,11 +242,19 @@ export function Admin() {
   const [renameOldSheet, setRenameOldSheet] = useState<string | null>(null)
   const [renameNewSheet, setRenameNewSheet] = useState('')
 
+  // Change sheet category state
+  const [changeCatSheet, setChangeCatSheet] = useState<string | null>(null)
+  const [changeCatNew, setChangeCatNew] = useState<CategoryId | null>(null)
+
   // Add form state
   const [jsonInput, setJsonInput] = useState('')
   const [sheetName, setSheetName] = useState('')
+  const [sheetCategory, setSheetCategory] = useState<CategoryId | null>(null)
   const [jsonError, setJsonError] = useState('')
   const [addSuccess, setAddSuccess] = useState('')
+
+  // Sheets from DB
+  const [dbSheets, setDbSheets] = useState<Sheet[]>([])
 
   // Edit modal state
   const [editOpened, { open: openEdit, close: closeEdit }] = useDisclosure(false)
@@ -251,11 +269,21 @@ export function Admin() {
     }
   }, [])
 
+  const loadSheets = useCallback(async () => {
+    try {
+      const data = await fetchSheets()
+      setDbSheets(data)
+    } catch (err) {
+      console.error(err)
+    }
+  }, [])
+
   useEffect(() => {
     if (isAuthenticated) {
       loadQuestions()
+      loadSheets()
     }
-  }, [isAuthenticated, loadQuestions])
+  }, [isAuthenticated, loadQuestions, loadSheets])
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
@@ -281,6 +309,11 @@ export function Admin() {
       return
     }
 
+    if (!sheetCategory) {
+      setJsonError('Category is required — select one of the allowed categories')
+      return
+    }
+
     let parsed: any[]
     try {
       parsed = JSON.parse(jsonInput)
@@ -303,11 +336,11 @@ export function Admin() {
         !q.explanation
       ) {
         throw new Error(
-          'Each question must have: category, type, question, options (array), answer (number), explanation'
+          'Each question must have: category, type, question, options (array), answer (number), explanation',
         )
       }
       return {
-        category: String(q.category),
+        category: String(q.category) as CategoryId,
         sheet: String(sheetName),
         type: q.type as QuestionType,
         question: String(q.question),
@@ -318,12 +351,17 @@ export function Admin() {
     })
 
     try {
+      // Insert the sheet record first
+      await insertSheet({ name: sheetName.trim(), category: sheetCategory })
       await insertQuestions(formatted)
-      setAddSuccess(`Successfully added ${formatted.length} question(s) to Sheet ${sheetName}`)
+      setAddSuccess(
+        `Successfully added ${formatted.length} question(s) to Sheet "${sheetName}" (${sheetCategory})`,
+      )
       setJsonInput('')
       loadQuestions()
-    } catch (err: any) {
-      setJsonError(err.message || 'Failed to insert questions')
+      loadSheets()
+    } catch (err) {
+      setJsonError(err instanceof Error ? err.message : 'Failed to insert questions')
     }
   }
 
@@ -333,11 +371,11 @@ export function Admin() {
       try {
         await deleteQuestion(id)
         loadQuestions()
-      } catch (err: any) {
-        alert(err.message || 'Failed to delete')
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Failed to delete')
       }
     },
-    [loadQuestions]
+    [loadQuestions],
   )
 
   const handleDeleteSheet = async () => {
@@ -345,7 +383,7 @@ export function Admin() {
     const count = questions.filter((q) => q.sheet === deleteSheetValue).length
     if (
       !window.confirm(
-        `Are you sure you want to delete Sheet "${deleteSheetValue}"?\nThis will permanently delete ${count} question(s).`
+        `Are you sure you want to delete Sheet "${deleteSheetValue}"?\nThis will permanently delete ${count} question(s).`,
       )
     )
       return
@@ -353,8 +391,9 @@ export function Admin() {
       await deleteSheetApi(deleteSheetValue)
       setDeleteSheetValue(null)
       loadQuestions()
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete sheet')
+      loadSheets()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete sheet')
     }
   }
 
@@ -367,7 +406,7 @@ export function Admin() {
     const count = questions.filter((q) => q.sheet === renameOldSheet).length
     if (
       !window.confirm(
-        `Rename Sheet "${renameOldSheet}" to "${renameNewSheet.trim()}"?\nThis will update ${count} question(s) and all linked scores.`
+        `Rename Sheet "${renameOldSheet}" to "${renameNewSheet.trim()}"?\nThis will update ${count} question(s) and all linked scores.`,
       )
     )
       return
@@ -376,23 +415,52 @@ export function Admin() {
       setRenameOldSheet(null)
       setRenameNewSheet('')
       loadQuestions()
-    } catch (err: any) {
-      alert(err.message || 'Failed to rename sheet')
+      loadSheets()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to rename sheet')
     }
   }
 
-  const openEditModal = useCallback((q: Question) => {
-    setEditingQuestion(q)
-    openEdit()
-  }, [openEdit])
+  const handleChangeSheetCategory = async () => {
+    if (!changeCatSheet || !changeCatNew) return
+    // Find current category of the selected sheet
+    const currentSheet = dbSheets.find((s) => s.name === changeCatSheet)
+    if (currentSheet && currentSheet.category === changeCatNew) {
+      alert('The sheet already belongs to this category')
+      return
+    }
+    const count = questions.filter((q) => q.sheet === changeCatSheet).length
+    if (
+      !window.confirm(
+        `Change category of Sheet "${changeCatSheet}" from "${currentSheet?.category ?? 'unknown'}" to "${changeCatNew}"?\nThis will update ${count} question(s) and all linked scores.`,
+      )
+    )
+      return
+    try {
+      await updateSheetCategory(changeCatSheet, changeCatNew)
+      setChangeCatSheet(null)
+      setChangeCatNew(null)
+      loadQuestions()
+      loadSheets()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to change sheet category')
+    }
+  }
+
+  const openEditModal = useCallback(
+    (q: Question) => {
+      setEditingQuestion(q)
+      openEdit()
+    },
+    [openEdit],
+  )
 
   /* Memoised derived data – prevents re-computation on every keystroke */
   const filteredQuestions = useMemo(() => {
     const term = search.toLowerCase()
     return questions.filter((q) => {
       const matchesSearch =
-        q.question.toLowerCase().includes(term) ||
-        q.category.toLowerCase().includes(term)
+        q.question.toLowerCase().includes(term) || q.category.toLowerCase().includes(term)
       const matchesCategory = filterCategory ? q.category === filterCategory : true
       const matchesSheet = filterSheet ? q.sheet === filterSheet : true
       return matchesSearch && matchesCategory && matchesSheet
@@ -400,13 +468,10 @@ export function Admin() {
   }, [questions, search, filterCategory, filterSheet])
 
   const categories = useMemo(
-    () => [...new Set(questions.map((q) => q.category))],
-    [questions]
+    () => [...new Set(questions.map((q) => q.category))] as CategoryId[],
+    [questions],
   )
-  const sheets = useMemo(
-    () => [...new Set(questions.map((q) => q.sheet).filter((s): s is string => !!s))],
-    [questions]
-  )
+  const sheets = useMemo(() => dbSheets.map((s) => s.name), [dbSheets])
 
   const totalQuestions = questions.length
   const totalCategories = categories.length
@@ -448,7 +513,7 @@ export function Admin() {
             variant="default"
             size="sm"
             leftSection={<ArrowLeft size={16} />}
-            onClick={() => navigate('/home')}
+            onClick={() => navigate('/')}
           >
             Back to Platform
           </Button>
@@ -506,6 +571,16 @@ export function Admin() {
             <Stack gap="md">
               <Text fw={600}>Add Questions via JSON</Text>
 
+              <Select
+                label="Sheet Category"
+                placeholder="Select category for this sheet"
+                data={CATEGORY_IDS.map((c) => ({ value: c, label: c }))}
+                value={sheetCategory}
+                onChange={(val) => setSheetCategory(val as CategoryId)}
+                description="All questions in this sheet will belong to this category"
+                required
+              />
+
               <TextInput
                 label="Sheet Name"
                 placeholder="e.g., 1, 2, 3..."
@@ -543,11 +618,7 @@ export function Admin() {
                 >
                   Clear
                 </Button>
-                <Button
-                  onClick={handleAddQuestions}
-                  color="teal"
-                  leftSection={<Plus size={16} />}
-                >
+                <Button onClick={handleAddQuestions} color="teal" leftSection={<Plus size={16} />}>
                   Add Questions
                 </Button>
               </Group>
@@ -632,6 +703,38 @@ export function Admin() {
                   onClick={handleRenameSheet}
                 >
                   Rename
+                </Button>
+              </Group>
+            </Card>
+
+            <Card shadow="sm" padding="md" radius="md" withBorder>
+              <Group justify="space-between" align="flex-end" grow>
+                <Select
+                  label="Change Sheet Category"
+                  placeholder="Select sheet"
+                  data={sheets}
+                  value={changeCatSheet}
+                  onChange={setChangeCatSheet}
+                  clearable
+                  style={{ minWidth: 200 }}
+                />
+                <Select
+                  label="New Category"
+                  placeholder="Select new category"
+                  data={CATEGORY_IDS.map((c) => ({ value: c, label: c }))}
+                  value={changeCatNew}
+                  onChange={(val) => setChangeCatNew(val as CategoryId)}
+                  clearable
+                  style={{ minWidth: 200 }}
+                />
+                <Button
+                  color="orange"
+                  variant="light"
+                  disabled={!changeCatSheet || !changeCatNew}
+                  leftSection={<Pencil size={16} />}
+                  onClick={handleChangeSheetCategory}
+                >
+                  Change Category
                 </Button>
               </Group>
             </Card>

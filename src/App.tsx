@@ -1,32 +1,64 @@
-import { Routes, Route } from 'react-router-dom'
-import { QuizProvider } from './context/QuizContext'
-import { Layout } from './components/Layout'
-import { PageTransition } from './components/PageTransition'
-import { Entry } from './pages/Entry'
-import { Home } from './pages/Home'
-import { Quiz } from './pages/Quiz'
-import { Result } from './pages/Result'
-import { Leaderboard } from './pages/Leaderboard'
-import { Admin } from './pages/Admin'
+import { lazy, Suspense } from "react";
+import { Routes, Route } from "react-router-dom";
+import { QuizProvider } from "./context/QuizContext";
+import { Layout } from "./components/Layout";
+import { PageTransition } from "./components/PageTransition";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { Entry } from "./pages/Entry";
+import { Home } from "./pages/Home";
+import { Loader, Text, Stack } from "@mantine/core";
+
+// Lazy-loaded pages — reduces initial bundle size
+const Quiz = lazy(() =>
+  import("./pages/Quiz").then((m) => ({ default: m.Quiz })),
+);
+const Result = lazy(() =>
+  import("./pages/Result").then((m) => ({ default: m.Result })),
+);
+const Leaderboard = lazy(() =>
+  import("./pages/Leaderboard").then((m) => ({ default: m.Leaderboard })),
+);
+const Admin = lazy(() =>
+  import("./pages/Admin").then((m) => ({ default: m.Admin })),
+);
+const NotFound = lazy(() =>
+  import("./pages/NotFound").then((m) => ({ default: m.NotFound })),
+);
+
+function PageLoader() {
+  return (
+    <Stack align="center" gap="md" pt="xl">
+      <Loader size="md" color="teal" />
+      <Text c="dimmed" size="sm">
+        Loading...
+      </Text>
+    </Stack>
+  );
+}
 
 function App() {
   return (
     <QuizProvider>
       <Layout>
-        <PageTransition>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Entry />} />
-            <Route path="/quiz/:category" element={<Quiz />} />
-            <Route path="/sheet/:sheet" element={<Quiz />} />
-            <Route path="/result" element={<Result />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/admin" element={<Admin />} />
-          </Routes>
-        </PageTransition>
+        <ErrorBoundary>
+          <PageTransition>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Entry />} />
+                <Route path="/quiz/:category" element={<Quiz />} />
+                <Route path="/sheet/:sheet" element={<Quiz />} />
+                <Route path="/result" element={<Result />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </PageTransition>
+        </ErrorBoundary>
       </Layout>
     </QuizProvider>
-  )
+  );
 }
 
-export default App
+export default App;

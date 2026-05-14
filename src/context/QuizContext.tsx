@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import { Question } from '../types'
+import { CategoryId } from '../lib/categories'
 import { fetchQuestionsByCategory, fetchQuestionsBySheet, saveScore } from '../lib/supabaseClient'
 
 interface QuizContextType {
   userName: string
   setUserName: (name: string) => void
-  currentCategory: string | null
+  currentCategory: CategoryId | null
   currentSheet: string | null
   questions: Question[]
   answers: Record<string, number>
@@ -13,7 +14,7 @@ interface QuizContextType {
   score: number | null
   loading: boolean
   error: string | null
-  startQuiz: (category: string) => Promise<void>
+  startQuiz: (category: CategoryId) => Promise<void>
   startSheetQuiz: (sheet: string) => Promise<void>
   setAnswer: (questionId: string, optionIndex: number) => void
   skipQuestion: (questionId: string) => void
@@ -29,7 +30,7 @@ export function QuizProvider({ children }: { children: ReactNode }) {
   const [userName, setUserNameState] = useState(() => {
     return localStorage.getItem(STORAGE_KEY) || ''
   })
-  const [currentCategory, setCurrentCategory] = useState<string | null>(null)
+  const [currentCategory, setCurrentCategory] = useState<CategoryId | null>(null)
   const [currentSheet, setCurrentSheet] = useState<string | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [answers, setAnswers] = useState<Record<string, number>>({})
@@ -43,7 +44,7 @@ export function QuizProvider({ children }: { children: ReactNode }) {
     setUserNameState(name)
   }, [])
 
-  const startQuiz = useCallback(async (category: string) => {
+  const startQuiz = useCallback(async (category: CategoryId) => {
     setLoading(true)
     setError(null)
     setAnswers({})
@@ -80,15 +81,19 @@ export function QuizProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const setAnswer = useCallback((questionId: string, optionIndex: number) => {
-    setAnswers(prev => {
+    setAnswers((prev) => {
       if (prev[questionId] !== undefined) return prev
       return { ...prev, [questionId]: optionIndex }
     })
-    setSubmittedAnswers(prev => ({ ...prev, [questionId]: true }))
+    setSubmittedAnswers((prev) => ({ ...prev, [questionId]: true }))
   }, [])
 
   const skipQuestion = useCallback((questionId: string) => {
-    setSubmittedAnswers(prev => {
+    setAnswers((prev) => {
+      if (prev[questionId] !== undefined) return prev
+      return { ...prev, [questionId]: -1 }
+    })
+    setSubmittedAnswers((prev) => {
       if (prev[questionId]) return prev
       return { ...prev, [questionId]: true }
     })
@@ -96,7 +101,7 @@ export function QuizProvider({ children }: { children: ReactNode }) {
 
   const submitQuiz = useCallback(() => {
     let correctCount = 0
-    questions.forEach(q => {
+    questions.forEach((q) => {
       if (answers[q.id] === q.answer) {
         correctCount++
       }
