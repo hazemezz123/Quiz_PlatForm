@@ -10,7 +10,7 @@ export function Entry() {
 
   useEffect(() => {
     if (userName) {
-      navigate('/home')
+      navigate('/')
     }
   }, [userName, navigate])
 
@@ -18,7 +18,7 @@ export function Entry() {
     e.preventDefault()
     if (name.trim()) {
       setUserName(name.trim())
-      navigate('/home')
+      navigate('/')
     }
   }
 
@@ -27,9 +27,11 @@ export function Entry() {
       <Card shadow="md" padding="xl" radius="md" withBorder>
         <Stack gap="lg">
           <Stack gap="xs" align="center">
-            <Text size="2rem" fw={800} ta="center" c="teal.4">
-              Quiz Platform
-            </Text>
+            <img
+              src="/logo.png"
+              alt="Indentify"
+              style={{ width: 80, height: 80, objectFit: 'contain' }}
+            />
             <Text c="dimmed" ta="center" size="sm">
               Test your knowledge. Track your progress.
             </Text>

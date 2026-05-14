@@ -21,11 +21,3 @@ export interface Score {
   sheet: string | null
   created_at: string
 }
-
-export interface QuizState {
-  userName: string
-  currentCategory: string | null
-  questions: Question[]
-  answers: Record<string, number>
-  score: number | null
-}

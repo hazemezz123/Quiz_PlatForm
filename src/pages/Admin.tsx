@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Card,
   Button,
@@ -19,14 +20,16 @@ import {
   PasswordInput,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Trash, Pencil, Search, Plus } from 'lucide-react'
+import { Trash, Pencil, Search, Plus, ArrowLeft } from 'lucide-react'
 import { Question, QuestionType } from '../types'
+import { CodeRenderer } from '../components/CodeRenderer'
 import {
   fetchAllQuestions,
   insertQuestions,
   deleteQuestion,
   updateQuestion,
   deleteSheet as deleteSheetApi,
+  renameSheet,
 } from '../lib/supabaseClient'
 
 const ADMIN_PASSWORD = 'hazemezz123123'
@@ -171,9 +174,7 @@ const QuestionRow = memo(function QuestionRow({ q, onEdit, onDelete }: RowProps)
   return (
     <Table.Tr>
       <Table.Td>
-        <Text size="sm" lineClamp={2} style={{ maxWidth: 300 }}>
-          {q.question}
-        </Text>
+        <CodeRenderer text={q.question} />
       </Table.Td>
       <Table.Td>
         <Badge size="sm" variant="light">
@@ -211,6 +212,8 @@ const QuestionRow = memo(function QuestionRow({ q, onEdit, onDelete }: RowProps)
 /*  Main Admin Page                                                   */
 /* ------------------------------------------------------------------ */
 export function Admin() {
+  const navigate = useNavigate()
+
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem(ADMIN_KEY) === 'true'
   })
@@ -218,13 +221,16 @@ export function Admin() {
   const [passwordError, setPasswordError] = useState('')
 
   const [questions, setQuestions] = useState<Question[]>([])
-  const [, setLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState<string | null>(null)
   const [filterSheet, setFilterSheet] = useState<string | null>(null)
 
   // Delete sheet state
   const [deleteSheetValue, setDeleteSheetValue] = useState<string | null>(null)
+
+  // Rename sheet state
+  const [renameOldSheet, setRenameOldSheet] = useState<string | null>(null)
+  const [renameNewSheet, setRenameNewSheet] = useState('')
 
   // Add form state
   const [jsonInput, setJsonInput] = useState('')
@@ -237,14 +243,11 @@ export function Admin() {
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
 
   const loadQuestions = useCallback(async () => {
-    setLoading(true)
     try {
       const data = await fetchAllQuestions()
       setQuestions(data)
     } catch (err) {
       console.error(err)
-    } finally {
-      setLoading(false)
     }
   }, [])
 
@@ -355,6 +358,29 @@ export function Admin() {
     }
   }
 
+  const handleRenameSheet = async () => {
+    if (!renameOldSheet || !renameNewSheet.trim()) return
+    if (renameOldSheet === renameNewSheet.trim()) {
+      alert('New name must be different from the current name')
+      return
+    }
+    const count = questions.filter((q) => q.sheet === renameOldSheet).length
+    if (
+      !window.confirm(
+        `Rename Sheet "${renameOldSheet}" to "${renameNewSheet.trim()}"?\nThis will update ${count} question(s) and all linked scores.`
+      )
+    )
+      return
+    try {
+      await renameSheet(renameOldSheet, renameNewSheet.trim())
+      setRenameOldSheet(null)
+      setRenameNewSheet('')
+      loadQuestions()
+    } catch (err: any) {
+      alert(err.message || 'Failed to rename sheet')
+    }
+  }
+
   const openEditModal = useCallback((q: Question) => {
     setEditingQuestion(q)
     openEdit()
@@ -417,9 +443,19 @@ export function Admin() {
         <Text fw={700} size="xl">
           Admin Dashboard
         </Text>
-        <Button variant="light" color="red" size="sm" onClick={handleLogout}>
-          Logout
-        </Button>
+        <Group gap="sm">
+          <Button
+            variant="default"
+            size="sm"
+            leftSection={<ArrowLeft size={16} />}
+            onClick={() => navigate('/home')}
+          >
+            Back to Platform
+          </Button>
+          <Button variant="light" color="red" size="sm" onClick={handleLogout}>
+            Logout
+          </Button>
+        </Group>
       </Group>
 
       <Grid>
@@ -566,6 +602,36 @@ export function Admin() {
                   onClick={handleDeleteSheet}
                 >
                   Delete Sheet
+                </Button>
+              </Group>
+            </Card>
+
+            <Card shadow="sm" padding="md" radius="md" withBorder>
+              <Group justify="space-between" align="flex-end" grow>
+                <Select
+                  label="Rename Sheet"
+                  placeholder="Select sheet"
+                  data={sheets}
+                  value={renameOldSheet}
+                  onChange={setRenameOldSheet}
+                  clearable
+                  style={{ minWidth: 200 }}
+                />
+                <TextInput
+                  label="New Name"
+                  placeholder="e.g., 5, Topic-Name..."
+                  value={renameNewSheet}
+                  onChange={(e) => setRenameNewSheet(e.currentTarget.value)}
+                  style={{ minWidth: 200 }}
+                />
+                <Button
+                  color="blue"
+                  variant="light"
+                  disabled={!renameOldSheet || !renameNewSheet.trim()}
+                  leftSection={<Pencil size={16} />}
+                  onClick={handleRenameSheet}
+                >
+                  Rename
                 </Button>
               </Group>
             </Card>

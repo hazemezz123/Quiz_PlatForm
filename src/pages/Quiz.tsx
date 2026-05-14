@@ -17,7 +17,6 @@ import {
   slideVariants,
   staggerContainerFast,
   fadeInLeft,
-  shakeVariants,
   springTransition,
   usePrefersReducedMotion,
 } from '../lib/animations'
@@ -204,17 +203,16 @@ export function Quiz() {
                       whileTap={!isSubmitted && !reducedMotion ? { scale: 0.97 } : {}}
                       animate={
                         isSubmitted && selected && !isCorrect && !reducedMotion
-                          ? 'shake'
+                          ? { x: [-5, 5, -5, 5, 0] }
                           : isSubmitted && isCorrect && !reducedMotion
                             ? { scale: 1.02 }
                             : {}
                       }
-                      variants={
+                      transition={
                         isSubmitted && selected && !isCorrect
-                          ? shakeVariants
-                          : undefined
+                          ? { duration: 0.4 }
+                          : springTransition
                       }
-                      transition={springTransition}
                     >
                       <Card
                         padding="md"

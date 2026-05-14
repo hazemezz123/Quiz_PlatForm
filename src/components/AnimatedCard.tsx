@@ -1,11 +1,17 @@
 import { motion } from "framer-motion";
 import { Card } from "@mantine/core";
-import { ComponentPropsWithoutRef } from "react";
+import { ReactNode, CSSProperties, MouseEvent } from "react";
 import { springTransitionFast, usePrefersReducedMotion } from "../lib/animations";
 
-type CardProps = ComponentPropsWithoutRef<typeof Card>;
+interface AnimatedCardProps {
+  children: ReactNode;
+  style?: CSSProperties;
+  onMouseEnter?: (e: MouseEvent<HTMLDivElement>) => void;
+  onMouseLeave?: (e: MouseEvent<HTMLDivElement>) => void;
+  [key: string]: any;
+}
 
-export function AnimatedCard({ children, style, ...props }: CardProps) {
+export function AnimatedCard({ children, style, onMouseEnter, onMouseLeave, ...props }: AnimatedCardProps) {
   const reducedMotion = usePrefersReducedMotion();
 
   return (
@@ -22,13 +28,13 @@ export function AnimatedCard({ children, style, ...props }: CardProps) {
           cursor: "pointer",
           transition: "border-color 150ms ease",
         }}
-        onMouseEnter={(e) => {
+        onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
           e.currentTarget.style.borderColor = "var(--mantine-color-teal-6)";
-          props.onMouseEnter?.(e);
+          onMouseEnter?.(e);
         }}
-        onMouseLeave={(e) => {
+        onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
           e.currentTarget.style.borderColor = "";
-          props.onMouseLeave?.(e);
+          onMouseLeave?.(e);
         }}
       >
         {children}

@@ -7,7 +7,6 @@ import {
   staggerContainer,
   fadeInUp,
   springTransitionFast,
-  usePrefersReducedMotion,
 } from '../lib/animations'
 import {
   FileText,
@@ -90,7 +89,6 @@ export function Home() {
   const [sheets, setSheets] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const reducedMotion = usePrefersReducedMotion()
 
   useEffect(() => {
     Promise.all([fetchCategories(), fetchSheets()])

@@ -96,6 +96,22 @@ export async function deleteSheet(sheet: string): Promise<void> {
   if (error) throw error
 }
 
+export async function renameSheet(oldSheet: string, newSheet: string): Promise<void> {
+  const { error: qError } = await supabase
+    .from('questions')
+    .update({ sheet: newSheet })
+    .eq('sheet', oldSheet)
+
+  if (qError) throw qError
+
+  const { error: sError } = await supabase
+    .from('scores')
+    .update({ sheet: newSheet })
+    .eq('sheet', oldSheet)
+
+  if (sError) throw sError
+}
+
 // Leaderboard operations
 export async function saveScore(score: Omit<Score, 'id' | 'created_at'>): Promise<void> {
   const { error } = await supabase
