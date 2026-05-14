@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Card, Button, Text, Stack, Group, Loader, Box, Badge } from '@mantine/core'
+import { Card, Button, Text, Stack, Group, Box, Badge } from '@mantine/core'
 import { AnimatedCard } from '../components/AnimatedCard'
 import {
   staggerContainer,
@@ -87,7 +87,6 @@ export function Home() {
   const { userName, startQuiz, startSheetQuiz } = useQuiz()
   const [categories, setCategories] = useState<string[]>([])
   const [sheets, setSheets] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -97,7 +96,6 @@ export function Home() {
         setSheets(shs)
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load data'))
-      .finally(() => setLoading(false))
   }, [])
 
   const handleSelectCategory = async (category: string) => {
@@ -108,15 +106,6 @@ export function Home() {
   const handleSelectSheet = async (sheet: string) => {
     await startSheetQuiz(sheet)
     navigate(`/sheet/${encodeURIComponent(sheet)}`)
-  }
-
-  if (loading) {
-    return (
-      <Stack align="center" gap="md" pt="xl">
-        <Loader size="md" color="teal" />
-        <Text c="dimmed" size="sm">Loading content...</Text>
-      </Stack>
-    )
   }
 
   if (error) {
