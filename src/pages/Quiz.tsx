@@ -7,7 +7,6 @@ import {
   Text,
   Stack,
   Group,
-  Loader,
   Badge,
   Box,
 } from '@mantine/core'
@@ -30,7 +29,6 @@ export function Quiz() {
     submittedAnswers,
     setAnswer,
     submitQuiz,
-    loading,
     error,
     currentCategory,
     currentSheet,
@@ -60,15 +58,6 @@ export function Quiz() {
   useEffect(() => {
     setCurrentIndex(0)
   }, [questions])
-
-  if (loading) {
-    return (
-      <Stack align="center" gap="md" pt="xl">
-        <Loader size="md" color="teal" />
-        <Text c="dimmed" size="sm">Loading questions...</Text>
-      </Stack>
-    )
-  }
 
   if (error) {
     return (
