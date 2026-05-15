@@ -484,8 +484,12 @@ export function Quiz() {
                         }}
                         onMouseLeave={() => setHoveredOption(null)}
                       >
-                        <Group justify="space-between" wrap="nowrap">
-                          <Text fw={selected ? 600 : 400} size="sm">
+                        <Group justify="space-between" wrap="nowrap" align="flex-start">
+                          <Text
+                            fw={selected ? 600 : 400}
+                            size="sm"
+                            style={{ whiteSpace: 'pre-wrap' }}
+                          >
                             {option}
                           </Text>
                           {isSubmitted && isCorrect && (
@@ -521,18 +525,22 @@ export function Quiz() {
                         border: '1px solid var(--mantine-color-dark-6)',
                       }}
                     >
-                      <Text size="xs" c="dimmed">
-                        <Text span fw={600} c="gray.4">
-                          Correct answer:
-                        </Text>{' '}
-                        {currentQuestion.options[currentQuestion.answer]}
-                      </Text>
+                        <Text size="xs" c="dimmed">
+                          <Text span fw={600} c="gray.4">
+                            Correct answer:
+                          </Text>{' '}
+                          <Text span style={{ whiteSpace: 'pre-wrap' }}>
+                            {currentQuestion.options[currentQuestion.answer]}
+                          </Text>
+                        </Text>
                       {currentQuestion.explanation && (
                         <Text size="xs" c="dimmed" mt={4}>
                           <Text span fw={600} c="gray.4">
                             Explanation:
                           </Text>{' '}
-                          {currentQuestion.explanation}
+                          <Text span style={{ whiteSpace: 'pre-wrap' }}>
+                            {currentQuestion.explanation}
+                          </Text>
                         </Text>
                       )}
                     </Card>

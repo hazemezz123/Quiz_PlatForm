@@ -190,8 +190,8 @@ export function Result() {
                   >
                     <Card shadow="sm" padding="lg" radius="md" withBorder>
                       <Stack gap="sm">
-                        <Group justify="space-between" wrap="nowrap">
-                          <Text fw={600} size="sm">
+                        <Group justify="space-between" wrap="nowrap" align="flex-start">
+                          <Text fw={600} size="sm" style={{ whiteSpace: 'pre-wrap' }}>
                             {originalIndex + 1}. {q.question}
                           </Text>
                           {statusBadge}
@@ -229,8 +229,12 @@ export function Result() {
                                   padding: 'var(--mantine-spacing-sm)',
                                 }}
                               >
-                                <Group justify="space-between" wrap="nowrap">
-                                  <Text size="sm" fw={isUserPick ? 600 : 400}>
+                                <Group justify="space-between" wrap="nowrap" align="flex-start">
+                                  <Text
+                                    size="sm"
+                                    fw={isUserPick ? 600 : 400}
+                                    style={{ whiteSpace: 'pre-wrap' }}
+                                  >
                                     {opt}
                                   </Text>
                                   {isCorrectOpt && (
@@ -261,7 +265,9 @@ export function Result() {
                             <Text span fw={600} c="gray.4">
                               Explanation:
                             </Text>{' '}
-                            {q.explanation}
+                            <Text span style={{ whiteSpace: 'pre-wrap' }}>
+                              {q.explanation}
+                            </Text>
                           </Text>
                         </Box>
                       </Stack>

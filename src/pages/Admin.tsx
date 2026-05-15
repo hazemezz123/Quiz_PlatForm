@@ -203,8 +203,10 @@ const QuestionRow = memo(function QuestionRow({ q, onEdit, onDelete }: RowProps)
         </Badge>
       </Table.Td>
       <Table.Td>
-        <Text size="sm" fw={600} c="teal">
-          {q.options[q.answer]}
+        <Text size="sm" fw={600} c="teal" style={{ fontFamily: 'monospace' }}>
+          {q.options[q.answer].includes('\n')
+            ? JSON.stringify(q.options[q.answer])
+            : q.options[q.answer]}
         </Text>
       </Table.Td>
       <Table.Td>
