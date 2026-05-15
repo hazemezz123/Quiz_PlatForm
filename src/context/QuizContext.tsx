@@ -3,6 +3,15 @@ import { Question } from '../types'
 import { CategoryId } from '../lib/categories'
 import { fetchQuestionsByCategory, fetchQuestionsBySheet, saveScore } from '../lib/supabaseClient'
 
+export interface SavedProgress {
+  category: CategoryId | null
+  sheet: string | null
+  answers: Record<string, number>
+  submittedAnswers: Record<string, boolean>
+  currentIndex: number
+  timestamp: number
+}
+
 interface QuizContextType {
   userName: string
   setUserName: (name: string) => void
@@ -20,11 +29,16 @@ interface QuizContextType {
   skipQuestion: (questionId: string) => void
   submitQuiz: () => void
   resetQuiz: () => void
+  saveProgress: (currentIndex: number) => void
+  clearProgress: () => void
+  getSavedProgress: () => SavedProgress | null
+  resumeFromProgress: (progress: SavedProgress) => Promise<void>
 }
 
 const QuizContext = createContext<QuizContextType | undefined>(undefined)
 
 const STORAGE_KEY = 'quiz_user_name'
+const PROGRESS_STORAGE_KEY = 'quiz_saved_progress'
 
 export function QuizProvider({ children }: { children: ReactNode }) {
   const [userName, setUserNameState] = useState(() => {
@@ -119,6 +133,9 @@ export function QuizProvider({ children }: { children: ReactNode }) {
       category: currentCategory,
       sheet: currentSheet,
     }).catch((err) => console.error('Failed to save score:', err))
+
+    // Clear saved progress since quiz is complete
+    localStorage.removeItem(PROGRESS_STORAGE_KEY)
   }, [questions, answers, userName, currentCategory, currentSheet])
 
   const resetQuiz = useCallback(() => {
@@ -129,6 +146,66 @@ export function QuizProvider({ children }: { children: ReactNode }) {
     setSubmittedAnswers({})
     setScore(null)
     setError(null)
+  }, [])
+
+  const saveProgress = useCallback(
+    (currentIndex: number) => {
+      const progress: SavedProgress = {
+        category: currentCategory,
+        sheet: currentSheet,
+        answers,
+        submittedAnswers,
+        currentIndex,
+        timestamp: Date.now(),
+      }
+      localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress))
+    },
+    [currentCategory, currentSheet, answers, submittedAnswers],
+  )
+
+  const clearProgress = useCallback(() => {
+    localStorage.removeItem(PROGRESS_STORAGE_KEY)
+  }, [])
+
+  const getSavedProgress = useCallback((): SavedProgress | null => {
+    const raw = localStorage.getItem(PROGRESS_STORAGE_KEY)
+    if (!raw) return null
+    try {
+      return JSON.parse(raw) as SavedProgress
+    } catch {
+      localStorage.removeItem(PROGRESS_STORAGE_KEY)
+      return null
+    }
+  }, [])
+
+  const resumeFromProgress = useCallback(async (progress: SavedProgress) => {
+    setLoading(true)
+    setError(null)
+    try {
+      let data: Question[]
+      if (progress.category) {
+        data = await fetchQuestionsByCategory(progress.category)
+        setCurrentCategory(progress.category)
+        setCurrentSheet(null)
+      } else if (progress.sheet) {
+        data = await fetchQuestionsBySheet(progress.sheet)
+        setCurrentSheet(progress.sheet)
+        setCurrentCategory(null)
+      } else {
+        throw new Error('No category or sheet in saved progress')
+      }
+      setQuestions(data)
+      setAnswers(progress.answers)
+      setSubmittedAnswers(progress.submittedAnswers)
+      setScore(null)
+      // Clear the saved progress after successful resume
+      localStorage.removeItem(PROGRESS_STORAGE_KEY)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resume quiz')
+      localStorage.removeItem(PROGRESS_STORAGE_KEY)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   return (
@@ -150,6 +227,10 @@ export function QuizProvider({ children }: { children: ReactNode }) {
         skipQuestion,
         submitQuiz,
         resetQuiz,
+        saveProgress,
+        clearProgress,
+        getSavedProgress,
+        resumeFromProgress,
       }}
     >
       {children}
