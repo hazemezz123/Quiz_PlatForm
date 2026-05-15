@@ -164,6 +164,51 @@ export async function fetchLeaderboard(limit: number = 100): Promise<Score[]> {
   return data as Score[]
 }
 
+export interface UserRecord {
+  user_name: string
+  created_at: string
+  last_seen: string
+  quiz_count: number
+}
+
+export async function registerUser(userName: string): Promise<void> {
+  const { error } = await supabase
+    .from('users')
+    .upsert(
+      { user_name: userName, last_seen: new Date().toISOString() },
+      { onConflict: 'user_name' }
+    )
+
+  if (error) throw error
+}
+
+export async function fetchUsersWithQuizCount(limit: number = 200): Promise<UserRecord[]> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('user_name, created_at, last_seen')
+    .order('last_seen', { ascending: false })
+    .limit(limit)
+
+  if (error) throw error
+
+  // Get quiz counts from scores table
+  const { data: scoreData, error: scoreError } = await supabase
+    .from('scores')
+    .select('user_name')
+
+  if (scoreError) throw scoreError
+
+  const quizCounts: Record<string, number> = {}
+  scoreData?.forEach((s) => {
+    quizCounts[s.user_name] = (quizCounts[s.user_name] || 0) + 1
+  })
+
+  return data.map((u) => ({
+    ...u,
+    quiz_count: quizCounts[u.user_name] || 0,
+  }))
+}
+
 export async function fetchScoresByUser(userName: string, limit: number = 20): Promise<Score[]> {
   const { data, error } = await supabase
     .from('scores')

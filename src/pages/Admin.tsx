@@ -18,9 +18,10 @@ import {
   ScrollArea,
   Grid,
   PasswordInput,
+  Loader,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Trash, Pencil, Search, Plus, ArrowLeft } from 'lucide-react'
+import { Trash, Pencil, Search, Plus, ArrowLeft, Users } from 'lucide-react'
 import { Question, QuestionType, Sheet } from '../types'
 import { CodeRenderer } from '../components/CodeRenderer'
 import {
@@ -33,6 +34,8 @@ import {
   insertSheet,
   fetchSheets,
   updateSheetCategory,
+  fetchUsersWithQuizCount,
+  UserRecord,
 } from '../lib/supabaseClient'
 import { CATEGORY_IDS, CategoryId } from '../lib/categories'
 
@@ -256,6 +259,11 @@ export function Admin() {
   // Sheets from DB
   const [dbSheets, setDbSheets] = useState<Sheet[]>([])
 
+  // Users from DB
+  const [users, setUsers] = useState<UserRecord[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [userSearch, setUserSearch] = useState('')
+
   // Edit modal state
   const [editOpened, { open: openEdit, close: closeEdit }] = useDisclosure(false)
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
@@ -278,12 +286,25 @@ export function Admin() {
     }
   }, [])
 
+  const loadUsers = useCallback(async () => {
+    setUsersLoading(true)
+    try {
+      const data = await fetchUsersWithQuizCount()
+      setUsers(data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setUsersLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (isAuthenticated) {
       loadQuestions()
       loadSheets()
+      loadUsers()
     }
-  }, [isAuthenticated, loadQuestions, loadSheets])
+  }, [isAuthenticated, loadQuestions, loadSheets, loadUsers])
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
@@ -467,6 +488,12 @@ export function Admin() {
     })
   }, [questions, search, filterCategory, filterSheet])
 
+  const filteredUsers = useMemo(() => {
+    if (!userSearch) return users
+    const term = userSearch.toLowerCase()
+    return users.filter((u) => u.user_name.toLowerCase().includes(term))
+  }, [users, userSearch])
+
   const categories = useMemo(
     () => [...new Set(questions.map((q) => q.category))] as CategoryId[],
     [questions],
@@ -563,6 +590,9 @@ export function Admin() {
           </Tabs.Tab>
           <Tabs.Tab value="manage" leftSection={<Search size={16} />}>
             Manage Questions
+          </Tabs.Tab>
+          <Tabs.Tab value="users" leftSection={<Users size={16} />}>
+            Users
           </Tabs.Tab>
         </Tabs.List>
 
@@ -775,6 +805,90 @@ export function Admin() {
                 </Table>
               </ScrollArea>
             </Card>
+          </Stack>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="users" pt="md">
+          <Stack gap="md">
+            <Group>
+              <TextInput
+                placeholder="Search users..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.currentTarget.value)}
+                leftSection={<Search size={16} />}
+                style={{ flex: 1 }}
+              />
+              <Text size="sm" c="dimmed">
+                {filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''}
+              </Text>
+            </Group>
+
+            {usersLoading ? (
+              <Stack align="center" gap="md" py="xl">
+                <Loader size="md" color="teal" />
+                <Text c="dimmed" size="sm">
+                  Loading users...
+                </Text>
+              </Stack>
+            ) : (
+              <Card shadow="sm" padding={0} radius="md" withBorder>
+                <ScrollArea>
+                  <Table striped highlightOnHover>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th style={{ width: 60 }}>#</Table.Th>
+                        <Table.Th>User Name</Table.Th>
+                        <Table.Th>Quizzes Taken</Table.Th>
+                        <Table.Th>First Seen</Table.Th>
+                        <Table.Th>Last Seen</Table.Th>
+                      </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {filteredUsers.length === 0 ? (
+                        <Table.Tr>
+                          <Table.Td colSpan={5}>
+                            <Text c="dimmed" ta="center" py="md">
+                              No users found.
+                            </Text>
+                          </Table.Td>
+                        </Table.Tr>
+                      ) : (
+                        filteredUsers.map((u, idx) => (
+                          <Table.Tr key={u.user_name}>
+                            <Table.Td>
+                              <Text fw={700} c="teal">
+                                #{idx + 1}
+                              </Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text fw={600}>{u.user_name}</Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Badge
+                                color={u.quiz_count > 0 ? 'teal' : 'gray'}
+                                variant="light"
+                              >
+                                {u.quiz_count}
+                              </Badge>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text size="xs" c="dimmed">
+                                {new Date(u.created_at).toLocaleDateString()}
+                              </Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text size="xs" c="dimmed">
+                                {new Date(u.last_seen).toLocaleDateString()}
+                              </Text>
+                            </Table.Td>
+                          </Table.Tr>
+                        ))
+                      )}
+                    </Table.Tbody>
+                  </Table>
+                </ScrollArea>
+              </Card>
+            )}
           </Stack>
         </Tabs.Panel>
       </Tabs>

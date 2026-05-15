@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, TextInput, Button, Text, Stack, Box } from '@mantine/core'
 import { useQuiz } from '../context/QuizContext'
+import { registerUser } from '../lib/supabaseClient'
 
 export function Entry() {
   const navigate = useNavigate()
@@ -14,10 +15,13 @@ export function Entry() {
     }
   }, [userName, navigate])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (name.trim()) {
       setUserName(name.trim())
+      registerUser(name.trim()).catch((err) =>
+        console.error('Failed to register user:', err)
+      )
       navigate('/')
     }
   }
