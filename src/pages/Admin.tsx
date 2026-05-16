@@ -16,12 +16,13 @@ import {
   Modal,
   ActionIcon,
   ScrollArea,
-  Grid,
   PasswordInput,
   Loader,
+  SimpleGrid,
+  Box,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Trash, Pencil, Search, Plus, ArrowLeft, Users } from 'lucide-react'
+import { Trash, Pencil, Search, Plus, ArrowLeft, Users, FileQuestion, FileText, ClipboardList, Target, Award } from 'lucide-react'
 import { Question, QuestionType, Sheet } from '../types'
 import { CodeRenderer } from '../components/CodeRenderer'
 import {
@@ -35,6 +36,8 @@ import {
   fetchSheets,
   updateSheetCategory,
   fetchUsersWithQuizCount,
+  fetchDashboardStats,
+  DashboardStats,
   UserRecord,
 } from '../lib/supabaseClient'
 import { CATEGORY_IDS, CategoryId } from '../lib/categories'
@@ -266,6 +269,9 @@ export function Admin() {
   const [usersLoading, setUsersLoading] = useState(false)
   const [userSearch, setUserSearch] = useState('')
 
+  // Dashboard stats
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
+
   // Edit modal state
   const [editOpened, { open: openEdit, close: closeEdit }] = useDisclosure(false)
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
@@ -300,13 +306,23 @@ export function Admin() {
     }
   }, [])
 
+  const loadDashboardStats = useCallback(async () => {
+    try {
+      const data = await fetchDashboardStats()
+      setDashboardStats(data)
+    } catch (err) {
+      console.error(err)
+    }
+  }, [])
+
   useEffect(() => {
     if (isAuthenticated) {
       loadQuestions()
       loadSheets()
       loadUsers()
+      loadDashboardStats()
     }
-  }, [isAuthenticated, loadQuestions, loadSheets, loadUsers])
+  }, [isAuthenticated, loadQuestions, loadSheets, loadUsers, loadDashboardStats])
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
@@ -502,10 +518,6 @@ export function Admin() {
   )
   const sheets = useMemo(() => dbSheets.map((s) => s.name), [dbSheets])
 
-  const totalQuestions = questions.length
-  const totalCategories = categories.length
-  const totalSheets = sheets.length
-
   if (!isAuthenticated) {
     return (
       <Stack align="center" gap="lg" pt="xl">
@@ -552,38 +564,36 @@ export function Admin() {
         </Group>
       </Group>
 
-      <Grid>
-        <Grid.Col span={{ base: 12, md: 4 }}>
-          <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Text size="sm" c="dimmed">
-              Total Questions
-            </Text>
-            <Text fw={700} size="2xl">
-              {totalQuestions}
-            </Text>
-          </Card>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 4 }}>
-          <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Text size="sm" c="dimmed">
-              Categories
-            </Text>
-            <Text fw={700} size="2xl">
-              {totalCategories}
-            </Text>
-          </Card>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 4 }}>
-          <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Text size="sm" c="dimmed">
-              Sheets
-            </Text>
-            <Text fw={700} size="2xl">
-              {totalSheets}
-            </Text>
-          </Card>
-        </Grid.Col>
-      </Grid>
+      {/* ─── Dashboard Stats ─── */}
+      {dashboardStats && (
+        <SimpleGrid cols={{ base: 2, sm: 3, md: 6 }} spacing="md">
+          {[
+            { label: 'Quizzes Taken', value: dashboardStats.totalQuizzes, icon: ClipboardList, color: 'teal' },
+            { label: 'Total Users', value: dashboardStats.totalUsers, icon: Users, color: 'blue' },
+            { label: 'Total Questions', value: dashboardStats.totalQuestions, icon: FileQuestion, color: 'violet' },
+            { label: 'Total Sheets', value: dashboardStats.totalSheets, icon: FileText, color: 'grape' },
+            { label: 'Avg Score', value: `${dashboardStats.averagePercentage}%`, icon: Target, color: 'orange' },
+            { label: 'Best Score', value: `${dashboardStats.bestPercentage}%`, icon: Award, color: 'yellow' },
+          ].map((stat) => {
+            const Icon = stat.icon
+            return (
+              <Card key={stat.label} shadow="sm" padding="md" radius="md" withBorder ta="center">
+                <Stack gap="xs" align="center">
+                  <Box c={`${stat.color}.4`}>
+                    <Icon size={24} strokeWidth={1.5} />
+                  </Box>
+                  <Text fw={800} size="xl" c={stat.color}>
+                    {stat.value}
+                  </Text>
+                  <Text c="dimmed" size="xs">
+                    {stat.label}
+                  </Text>
+                </Stack>
+              </Card>
+            )
+          })}
+        </SimpleGrid>
+      )}
 
       <Tabs defaultValue="add" color="teal">
         <Tabs.List>

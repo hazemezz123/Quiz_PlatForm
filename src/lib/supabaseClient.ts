@@ -220,3 +220,45 @@ export async function fetchScoresByUser(userName: string, limit: number = 20): P
   if (error) throw error
   return data as Score[]
 }
+
+export interface DashboardStats {
+  totalQuizzes: number
+  totalUsers: number
+  totalQuestions: number
+  totalSheets: number
+  averagePercentage: number
+  bestPercentage: number
+}
+
+export async function fetchDashboardStats(): Promise<DashboardStats> {
+  const [scoresRes, usersRes, questionsRes, sheetsRes] = await Promise.all([
+    supabase.from('scores').select('percentage, user_name'),
+    supabase.from('users').select('user_name'),
+    supabase.from('questions').select('id', { count: 'exact' }),
+    supabase.from('sheets').select('name', { count: 'exact' }),
+  ])
+
+  if (scoresRes.error) throw scoresRes.error
+  if (usersRes.error) throw usersRes.error
+  if (questionsRes.error) throw questionsRes.error
+  if (sheetsRes.error) throw sheetsRes.error
+
+  const scores = scoresRes.data
+  const totalQuizzes = scores.length
+  const uniqueUsers = new Set(scores.map((s) => s.user_name)).size
+  const totalUsers = Math.max(uniqueUsers, usersRes.data?.length ?? 0)
+  const percentages = scores.map((s) => s.percentage)
+  const averagePercentage = percentages.length > 0
+    ? Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length)
+    : 0
+  const bestPercentage = percentages.length > 0 ? Math.max(...percentages) : 0
+
+  return {
+    totalQuizzes,
+    totalUsers,
+    totalQuestions: questionsRes.count ?? 0,
+    totalSheets: sheetsRes.count ?? 0,
+    averagePercentage,
+    bestPercentage,
+  }
+}
