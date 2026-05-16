@@ -22,8 +22,21 @@ import {
   Box,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Trash, Pencil, Search, Plus, ArrowLeft, Users, FileQuestion, FileText, ClipboardList, Target, Award } from 'lucide-react'
-import { Question, QuestionType, Sheet } from '../types'
+import {
+  Trash,
+  Pencil,
+  Search,
+  Plus,
+  ArrowLeft,
+  Users,
+  FileQuestion,
+  FileText,
+  ClipboardList,
+  Target,
+  Award,
+  Download,
+} from 'lucide-react'
+import { Question, QuestionType, Sheet, Score } from '../types'
 import { CodeRenderer } from '../components/CodeRenderer'
 import {
   fetchAllQuestions,
@@ -37,9 +50,11 @@ import {
   updateSheetCategory,
   fetchUsersWithQuizCount,
   fetchDashboardStats,
+  fetchAllScores,
   DashboardStats,
   UserRecord,
 } from '../lib/supabaseClient'
+import { questionsToCsv, scoresToCsv, downloadCsv } from '../lib/csvExport'
 import { CATEGORY_IDS, CategoryId } from '../lib/categories'
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
@@ -269,6 +284,10 @@ export function Admin() {
   const [usersLoading, setUsersLoading] = useState(false)
   const [userSearch, setUserSearch] = useState('')
 
+  // Export state
+  const [exportScores, setExportScores] = useState<Score[]>([])
+  const [exportLoading, setExportLoading] = useState(false)
+
   // Dashboard stats
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
 
@@ -315,14 +334,27 @@ export function Admin() {
     }
   }, [])
 
+  const loadExportScores = useCallback(async () => {
+    setExportLoading(true)
+    try {
+      const data = await fetchAllScores()
+      setExportScores(data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setExportLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (isAuthenticated) {
       loadQuestions()
       loadSheets()
       loadUsers()
       loadDashboardStats()
+      loadExportScores()
     }
-  }, [isAuthenticated, loadQuestions, loadSheets, loadUsers, loadDashboardStats])
+  }, [isAuthenticated, loadQuestions, loadSheets, loadUsers, loadDashboardStats, loadExportScores])
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
@@ -568,12 +600,37 @@ export function Admin() {
       {dashboardStats && (
         <SimpleGrid cols={{ base: 2, sm: 3, md: 6 }} spacing="md">
           {[
-            { label: 'Quizzes Taken', value: dashboardStats.totalQuizzes, icon: ClipboardList, color: 'teal' },
+            {
+              label: 'Quizzes Taken',
+              value: dashboardStats.totalQuizzes,
+              icon: ClipboardList,
+              color: 'teal',
+            },
             { label: 'Total Users', value: dashboardStats.totalUsers, icon: Users, color: 'blue' },
-            { label: 'Total Questions', value: dashboardStats.totalQuestions, icon: FileQuestion, color: 'violet' },
-            { label: 'Total Sheets', value: dashboardStats.totalSheets, icon: FileText, color: 'grape' },
-            { label: 'Avg Score', value: `${dashboardStats.averagePercentage}%`, icon: Target, color: 'orange' },
-            { label: 'Best Score', value: `${dashboardStats.bestPercentage}%`, icon: Award, color: 'yellow' },
+            {
+              label: 'Total Questions',
+              value: dashboardStats.totalQuestions,
+              icon: FileQuestion,
+              color: 'violet',
+            },
+            {
+              label: 'Total Sheets',
+              value: dashboardStats.totalSheets,
+              icon: FileText,
+              color: 'grape',
+            },
+            {
+              label: 'Avg Score',
+              value: `${dashboardStats.averagePercentage}%`,
+              icon: Target,
+              color: 'orange',
+            },
+            {
+              label: 'Best Score',
+              value: `${dashboardStats.bestPercentage}%`,
+              icon: Award,
+              color: 'yellow',
+            },
           ].map((stat) => {
             const Icon = stat.icon
             return (
@@ -605,6 +662,9 @@ export function Admin() {
           </Tabs.Tab>
           <Tabs.Tab value="users" leftSection={<Users size={16} />}>
             Users
+          </Tabs.Tab>
+          <Tabs.Tab value="export" leftSection={<Download size={16} />}>
+            Export CSV
           </Tabs.Tab>
         </Tabs.List>
 
@@ -876,10 +936,7 @@ export function Admin() {
                               <Text fw={600}>{u.user_name}</Text>
                             </Table.Td>
                             <Table.Td>
-                              <Badge
-                                color={u.quiz_count > 0 ? 'teal' : 'gray'}
-                                variant="light"
-                              >
+                              <Badge color={u.quiz_count > 0 ? 'teal' : 'gray'} variant="light">
                                 {u.quiz_count}
                               </Badge>
                             </Table.Td>
@@ -901,6 +958,134 @@ export function Admin() {
                 </ScrollArea>
               </Card>
             )}
+          </Stack>
+        </Tabs.Panel>
+
+        {/* ─── Export CSV ─── */}
+        <Tabs.Panel value="export" pt="md">
+          <Stack gap="md">
+            {/* ── Export Questions ── */}
+            <Card shadow="sm" padding="lg" radius="md" withBorder>
+              <Stack gap="md">
+                <Text fw={600}>Export Questions as CSV</Text>
+                <Text size="sm" c="dimmed">
+                  Download all questions or filter by a specific sheet. Each row contains: category,
+                  sheet, type, question, options (JSON), answer index, explanation.
+                </Text>
+
+                <Group justify="flex-end">
+                  <Button
+                    variant="default"
+                    leftSection={<Download size={16} />}
+                    onClick={() => {
+                      const csv = questionsToCsv(questions)
+                      downloadCsv(csv, 'all_questions.csv')
+                    }}
+                  >
+                    Export All Questions ({questions.length})
+                  </Button>
+                </Group>
+
+                <Group justify="space-between" align="flex-end" grow>
+                  <Select
+                    label="Export Questions by Sheet"
+                    placeholder="Select a sheet"
+                    data={sheets}
+                    clearable
+                    style={{ minWidth: 280 }}
+                  />
+                  <Button
+                    color="teal"
+                    variant="light"
+                    leftSection={<Download size={16} />}
+                    onClick={() => {
+                      // Use the filterSheet state which tracks the selected sheet
+                      if (!filterSheet) {
+                        alert('Please select a sheet first')
+                        return
+                      }
+                      const sheetQuestions = questions.filter((q) => q.sheet === filterSheet)
+                      if (sheetQuestions.length === 0) {
+                        alert('No questions found for this sheet')
+                        return
+                      }
+                      const csv = questionsToCsv(sheetQuestions)
+                      downloadCsv(csv, `sheet_${filterSheet}_questions.csv`)
+                    }}
+                  >
+                    Export Sheet Questions
+                  </Button>
+                </Group>
+
+                <Group justify="space-between" align="flex-end" grow>
+                  <Select
+                    label="Export Questions by Category"
+                    placeholder="Select a category"
+                    data={categories}
+                    clearable
+                    style={{ minWidth: 280 }}
+                  />
+                  <Button
+                    color="violet"
+                    variant="light"
+                    leftSection={<Download size={16} />}
+                    onClick={() => {
+                      if (!filterCategory) {
+                        alert('Please select a category first')
+                        return
+                      }
+                      const catQuestions = questions.filter((q) => q.category === filterCategory)
+                      if (catQuestions.length === 0) {
+                        alert('No questions found for this category')
+                        return
+                      }
+                      const csv = questionsToCsv(catQuestions)
+                      downloadCsv(csv, `category_${filterCategory}_questions.csv`)
+                    }}
+                  >
+                    Export Category Questions
+                  </Button>
+                </Group>
+              </Stack>
+            </Card>
+
+            {/* ── Export Scores ── */}
+            <Card shadow="sm" padding="lg" radius="md" withBorder>
+              <Stack gap="md">
+                <Text fw={600}>Export Scores as CSV</Text>
+                <Text size="sm" c="dimmed">
+                  Download all quiz scores. Each row contains: user_name, score, total_questions,
+                  percentage, category, sheet, created_at.
+                </Text>
+
+                {exportLoading ? (
+                  <Group justify="center" py="sm">
+                    <Loader size="sm" color="teal" />
+                    <Text size="sm" c="dimmed">
+                      Loading scores...
+                    </Text>
+                  </Group>
+                ) : (
+                  <Group justify="flex-end">
+                    <Button
+                      color="blue"
+                      variant="light"
+                      leftSection={<Download size={16} />}
+                      onClick={() => {
+                        if (exportScores.length === 0) {
+                          alert('No scores to export')
+                          return
+                        }
+                        const csv = scoresToCsv(exportScores)
+                        downloadCsv(csv, 'all_scores.csv')
+                      }}
+                    >
+                      Export All Scores ({exportScores.length})
+                    </Button>
+                  </Group>
+                )}
+              </Stack>
+            </Card>
           </Stack>
         </Tabs.Panel>
       </Tabs>

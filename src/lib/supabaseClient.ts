@@ -176,7 +176,7 @@ export async function registerUser(userName: string): Promise<void> {
     .from('users')
     .upsert(
       { user_name: userName, last_seen: new Date().toISOString() },
-      { onConflict: 'user_name' }
+      { onConflict: 'user_name' },
     )
 
   if (error) throw error
@@ -192,9 +192,7 @@ export async function fetchUsersWithQuizCount(limit: number = 200): Promise<User
   if (error) throw error
 
   // Get quiz counts from scores table
-  const { data: scoreData, error: scoreError } = await supabase
-    .from('scores')
-    .select('user_name')
+  const { data: scoreData, error: scoreError } = await supabase.from('scores').select('user_name')
 
   if (scoreError) throw scoreError
 
@@ -216,6 +214,16 @@ export async function fetchScoresByUser(userName: string, limit: number = 20): P
     .eq('user_name', userName)
     .order('created_at', { ascending: false })
     .limit(limit)
+
+  if (error) throw error
+  return data as Score[]
+}
+
+export async function fetchAllScores(): Promise<Score[]> {
+  const { data, error } = await supabase
+    .from('scores')
+    .select('*')
+    .order('created_at', { ascending: false })
 
   if (error) throw error
   return data as Score[]
@@ -248,9 +256,10 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
   const uniqueUsers = new Set(scores.map((s) => s.user_name)).size
   const totalUsers = Math.max(uniqueUsers, usersRes.data?.length ?? 0)
   const percentages = scores.map((s) => s.percentage)
-  const averagePercentage = percentages.length > 0
-    ? Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length)
-    : 0
+  const averagePercentage =
+    percentages.length > 0
+      ? Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length)
+      : 0
   const bestPercentage = percentages.length > 0 ? Math.max(...percentages) : 0
 
   return {
