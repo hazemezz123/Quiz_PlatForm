@@ -267,16 +267,25 @@ export function Home() {
                             <Text fw={700} size="xl" ta="center">
                               {sheet.name}
                             </Text>
-                            <Badge color={config?.color ?? 'teal'} variant="light" size="sm">
-                              {sheet.category}
-                            </Badge>
+                            <Group gap="xs">
+                              <Badge color={config?.color ?? 'teal'} variant="light" size="sm">
+                                {sheet.category}
+                              </Badge>
+                              {!sheet.is_official && (
+                                <Badge color="yellow" variant="filled" size="sm">
+                                  Unofficial
+                                </Badge>
+                              )}
+                            </Group>
                             <Text c="dimmed" size="xs" ta="center">
-                              Complete quiz for {sheet.category}
+                              {!sheet.is_official
+                                ? 'Practice questions — not included in Big Quiz'
+                                : `Complete quiz for ${sheet.category}`}
                             </Text>
                             <Button
                               onClick={() => handleSelectSheet(sheet.name)}
                               fullWidth
-                              color={config?.color ?? 'teal'}
+                              color={sheet.is_official ? (config?.color ?? 'teal') : 'yellow'}
                               size="md"
                             >
                               Start Quiz

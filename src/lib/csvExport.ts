@@ -67,10 +67,42 @@ export function scoresToCsv(scores: Score[]): string {
 }
 
 /**
+ * Convert an array of Questions to a JSON string.
+ * Each question is serialized with all its fields.
+ */
+export function questionsToJson(questions: Question[]): string {
+  return JSON.stringify(questions, null, 2)
+}
+
+/**
+ * Convert an array of Scores to a JSON string.
+ * Each score is serialized with all its fields.
+ */
+export function scoresToJson(scores: Score[]): string {
+  return JSON.stringify(scores, null, 2)
+}
+
+/**
  * Trigger a browser download of a CSV string as a file.
  */
 export function downloadCsv(csvContent: string, filename: string): void {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.style.display = 'none'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+/**
+ * Trigger a browser download of a JSON string as a file.
+ */
+export function downloadJson(jsonContent: string, filename: string): void {
+  const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url

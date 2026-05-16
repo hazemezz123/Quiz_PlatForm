@@ -84,16 +84,19 @@ export interface Database {
         Row: {
           name: string
           category: CategoryId
+          is_official: boolean
           created_at: string
         }
         Insert: {
           name: string
           category: CategoryId
+          is_official?: boolean
           created_at?: string
         }
         Update: {
           name?: string
           category?: CategoryId
+          is_official?: boolean
           created_at?: string
         }
       }

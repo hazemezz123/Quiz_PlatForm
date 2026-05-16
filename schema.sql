@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS scores (
 CREATE TABLE IF NOT EXISTS sheets (
   name text PRIMARY KEY,
   category text NOT NULL CHECK (category IN ('AI Programming', 'AI Fundamental', 'Digital Circuit', 'Human Rights', 'Operating System', 'English', 'Negotiations')),
+  is_official boolean NOT NULL DEFAULT true,
   created_at timestamp with time zone DEFAULT now()
 );
 
@@ -265,3 +266,71 @@ VALUES
   ('Operating System', 'truefalse', 'Virtual memory allows a system to use more memory than is physically available in RAM.', '["True", "False"]', 0, 'Virtual memory uses disk space to extend available memory beyond physical RAM, enabling larger programs to run.'),
   ('Operating System', 'mcq', 'What is the purpose of a page table in memory management?', '["To store user passwords", "To map virtual addresses to physical addresses", "To list running processes", "To manage disk partitions"]', 1, 'A page table is the data structure used by the OS to translate virtual page numbers to physical frame addresses in RAM.')
 ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- Admin Auth User
+-- The admin page requires a Supabase Auth session (authenticated role)
+-- to perform INSERT/UPDATE/DELETE on sheets, questions, and scores.
+-- Create the admin user with a bcrypt-hashed password.
+-- ============================================================
+
+-- Ensure pgcrypto extension is available for password hashing
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+
+-- Create admin user in auth.users
+-- Default credentials: email=admin@quiz.local, password=admin123
+-- IMPORTANT: Change the password after initial setup!
+INSERT INTO auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  created_at,
+  updated_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  confirmation_token,
+  email_change,
+  email_change_token_new,
+  recovery_token
+) VALUES (
+  '00000000-0000-0000-0000-000000000000',
+  gen_random_uuid(),
+  'authenticated',
+  'authenticated',
+  'admin@quiz.local',
+  crypt('admin123', gen_salt('bf')),
+  now(),
+  now(),
+  now(),
+  '{"provider": "email", "providers": ["email"], "role": "admin"}',
+  '{"role": "admin"}',
+  '',
+  '',
+  '',
+  ''
+) ON CONFLICT DO NOTHING;
+
+-- Create the corresponding identity record (required for signInWithPassword)
+INSERT INTO auth.identities (
+  id,
+  user_id,
+  provider_id,
+  provider,
+  identity_data,
+  last_sign_in_at,
+  created_at,
+  updated_at
+) VALUES (
+  gen_random_uuid(),
+  (SELECT id FROM auth.users WHERE email = 'admin@quiz.local'),
+  'admin@quiz.local',
+  'email',
+  '{"sub": "", "email": "admin@quiz.local", "email_verified": true, "phone_verified": false, "iss": "", "aud": ""}',
+  now(),
+  now(),
+  now()
+) ON CONFLICT DO NOTHING;

@@ -16,6 +16,7 @@ export interface Question {
 export interface Sheet {
   name: string
   category: CategoryId
+  is_official?: boolean
   created_at?: string
 }
 

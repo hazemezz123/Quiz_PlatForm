@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, Session } from '@supabase/supabase-js'
 import { Question, Score, Sheet } from '../types'
 import { CategoryId } from './categories'
 
@@ -7,21 +7,74 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+/* ------------------------------------------------------------------ */
+/*  Auth helpers for admin operations                                  */
+/* ------------------------------------------------------------------ */
+
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@quiz.local'
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
+
+export async function signInAdmin(): Promise<Session> {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: ADMIN_EMAIL,
+    password: ADMIN_PASSWORD,
+  })
+  if (error) throw error
+  if (!data.session) throw new Error('No session returned')
+  return data.session
+}
+
+export async function signOutAdmin(): Promise<void> {
+  const { error } = await supabase.auth.signOut()
+  if (error) throw error
+}
+
+export async function getAdminSession(): Promise<Session | null> {
+  const { data, error } = await supabase.auth.getSession()
+  if (error) throw error
+  return data.session
+}
+
 export async function fetchCategories(): Promise<CategoryId[]> {
-  const { data, error } = await supabase.from('questions').select('category')
+  // Only count questions from official sheets for category availability
+  const { data: unofficialSheets, error: sheetsError } = await supabase
+    .from('sheets')
+    .select('name')
+    .eq('is_official', false)
+
+  if (sheetsError) throw sheetsError
+
+  const unofficialNames = unofficialSheets.map((s) => s.name)
+
+  const { data, error } = await supabase.from('questions').select('category, sheet')
 
   if (error) throw error
 
-  const categories = [...new Set(data.map((q) => q.category))] as CategoryId[]
+  // Filter out questions from unofficial sheets
+  const filtered = data.filter((q) => !unofficialNames.includes(q.sheet ?? ''))
+  const categories = [...new Set(filtered.map((q) => q.category))] as CategoryId[]
   return categories
 }
 
 export async function fetchQuestionsByCategory(category: CategoryId): Promise<Question[]> {
+  // Fetch unofficial sheet names so we can exclude them from the "Big Quiz"
+  const { data: unofficialSheets, error: sheetsError } = await supabase
+    .from('sheets')
+    .select('name')
+    .eq('is_official', false)
+
+  if (sheetsError) throw sheetsError
+
+  const unofficialNames = unofficialSheets.map((s) => s.name)
+
   const { data, error } = await supabase.from('questions').select('*').eq('category', category)
 
   if (error) throw error
 
-  return data as Question[]
+  // Exclude questions from unofficial sheets — the "Big Quiz" only includes official sheets
+  const filtered = (data as Question[]).filter((q) => !unofficialNames.includes(q.sheet ?? ''))
+
+  return filtered
 }
 
 export async function fetchSheets(): Promise<Sheet[]> {

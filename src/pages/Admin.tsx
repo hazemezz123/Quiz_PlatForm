@@ -39,6 +39,10 @@ import {
 import { Question, QuestionType, Sheet, Score } from '../types'
 import { CodeRenderer } from '../components/CodeRenderer'
 import {
+  supabase,
+  signInAdmin,
+  signOutAdmin,
+  getAdminSession,
   fetchAllQuestions,
   insertQuestions,
   deleteQuestion,
@@ -54,11 +58,17 @@ import {
   DashboardStats,
   UserRecord,
 } from '../lib/supabaseClient'
-import { questionsToCsv, scoresToCsv, downloadCsv } from '../lib/csvExport'
+import {
+  questionsToCsv,
+  scoresToCsv,
+  downloadCsv,
+  questionsToJson,
+  scoresToJson,
+  downloadJson,
+} from '../lib/csvExport'
 import { CATEGORY_IDS, CategoryId } from '../lib/categories'
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
-const ADMIN_KEY = 'quiz_admin_auth'
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@quiz.local'
 
 /* ------------------------------------------------------------------ */
 /*  Edit Modal – extracted so its state changes don’t re-render table  */
@@ -247,9 +257,8 @@ const QuestionRow = memo(function QuestionRow({ q, onEdit, onDelete }: RowProps)
 export function Admin() {
   const navigate = useNavigate()
 
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem(ADMIN_KEY) === 'true'
-  })
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
   const [password, setPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
 
@@ -346,6 +355,29 @@ export function Admin() {
     }
   }, [])
 
+  // Check for existing Supabase Auth session on mount
+  useEffect(() => {
+    getAdminSession()
+      .then((session) => {
+        setIsAuthenticated(session !== null)
+      })
+      .catch(() => {
+        setIsAuthenticated(false)
+      })
+      .finally(() => {
+        setAuthLoading(false)
+      })
+
+    // Listen for auth state changes (e.g. session expiry)
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(session !== null)
+    })
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
+  }, [])
+
   useEffect(() => {
     if (isAuthenticated) {
       loadQuestions()
@@ -356,18 +388,25 @@ export function Admin() {
     }
   }, [isAuthenticated, loadQuestions, loadSheets, loadUsers, loadDashboardStats, loadExportScores])
 
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      localStorage.setItem(ADMIN_KEY, 'true')
+  const handleLogin = async () => {
+    setAuthLoading(true)
+    setPasswordError('')
+    try {
+      await signInAdmin()
       setIsAuthenticated(true)
-      setPasswordError('')
-    } else {
-      setPasswordError('Incorrect password')
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Login failed — check your credentials')
+    } finally {
+      setAuthLoading(false)
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem(ADMIN_KEY)
+  const handleLogout = async () => {
+    try {
+      await signOutAdmin()
+    } catch {
+      // Even if signOut fails on the server, clear local state
+    }
     setIsAuthenticated(false)
   }
 
@@ -550,6 +589,17 @@ export function Admin() {
   )
   const sheets = useMemo(() => dbSheets.map((s) => s.name), [dbSheets])
 
+  if (authLoading && !isAuthenticated) {
+    return (
+      <Stack align="center" gap="lg" pt="xl">
+        <Loader size="md" color="teal" />
+        <Text c="dimmed" size="sm">
+          Checking authentication...
+        </Text>
+      </Stack>
+    )
+  }
+
   if (!isAuthenticated) {
     return (
       <Stack align="center" gap="lg" pt="xl">
@@ -558,15 +608,21 @@ export function Admin() {
         </Text>
         <Card shadow="sm" padding="xl" radius="md" withBorder maw={400} w="100%">
           <Stack gap="md">
+            <TextInput
+              label="Email"
+              value={ADMIN_EMAIL}
+              disabled
+              description="Admin account is pre-configured"
+            />
             <PasswordInput
               label="Password"
               placeholder="Enter admin password"
               value={password}
               onChange={(e) => setPassword(e.currentTarget.value)}
               error={passwordError}
-              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              onKeyDown={(e) => e.key === 'Enter' && !authLoading && handleLogin()}
             />
-            <Button onClick={handleLogin} color="teal" fullWidth>
+            <Button onClick={handleLogin} color="teal" fullWidth loading={authLoading}>
               Login
             </Button>
           </Stack>
@@ -664,7 +720,7 @@ export function Admin() {
             Users
           </Tabs.Tab>
           <Tabs.Tab value="export" leftSection={<Download size={16} />}>
-            Export CSV
+            Export
           </Tabs.Tab>
         </Tabs.List>
 
@@ -961,16 +1017,16 @@ export function Admin() {
           </Stack>
         </Tabs.Panel>
 
-        {/* ─── Export CSV ─── */}
+        {/* ─── Export ─── */}
         <Tabs.Panel value="export" pt="md">
           <Stack gap="md">
             {/* ── Export Questions ── */}
             <Card shadow="sm" padding="lg" radius="md" withBorder>
               <Stack gap="md">
-                <Text fw={600}>Export Questions as CSV</Text>
+                <Text fw={600}>Export Questions</Text>
                 <Text size="sm" c="dimmed">
-                  Download all questions or filter by a specific sheet. Each row contains: category,
-                  sheet, type, question, options (JSON), answer index, explanation.
+                  Download all questions or filter by a specific sheet. Available in CSV and JSON
+                  formats.
                 </Text>
 
                 <Group justify="flex-end">
@@ -982,7 +1038,18 @@ export function Admin() {
                       downloadCsv(csv, 'all_questions.csv')
                     }}
                   >
-                    Export All Questions ({questions.length})
+                    CSV – All Questions ({questions.length})
+                  </Button>
+                  <Button
+                    color="grape"
+                    variant="light"
+                    leftSection={<Download size={16} />}
+                    onClick={() => {
+                      const json = questionsToJson(questions)
+                      downloadJson(json, 'all_questions.json')
+                    }}
+                  >
+                    JSON – All Questions ({questions.length})
                   </Button>
                 </Group>
 
@@ -1013,7 +1080,27 @@ export function Admin() {
                       downloadCsv(csv, `sheet_${filterSheet}_questions.csv`)
                     }}
                   >
-                    Export Sheet Questions
+                    CSV – Sheet Questions
+                  </Button>
+                  <Button
+                    color="grape"
+                    variant="light"
+                    leftSection={<Download size={16} />}
+                    onClick={() => {
+                      if (!filterSheet) {
+                        alert('Please select a sheet first')
+                        return
+                      }
+                      const sheetQuestions = questions.filter((q) => q.sheet === filterSheet)
+                      if (sheetQuestions.length === 0) {
+                        alert('No questions found for this sheet')
+                        return
+                      }
+                      const json = questionsToJson(sheetQuestions)
+                      downloadJson(json, `sheet_${filterSheet}_questions.json`)
+                    }}
+                  >
+                    JSON – Sheet Questions
                   </Button>
                 </Group>
 
@@ -1043,7 +1130,27 @@ export function Admin() {
                       downloadCsv(csv, `category_${filterCategory}_questions.csv`)
                     }}
                   >
-                    Export Category Questions
+                    CSV – Category Questions
+                  </Button>
+                  <Button
+                    color="grape"
+                    variant="light"
+                    leftSection={<Download size={16} />}
+                    onClick={() => {
+                      if (!filterCategory) {
+                        alert('Please select a category first')
+                        return
+                      }
+                      const catQuestions = questions.filter((q) => q.category === filterCategory)
+                      if (catQuestions.length === 0) {
+                        alert('No questions found for this category')
+                        return
+                      }
+                      const json = questionsToJson(catQuestions)
+                      downloadJson(json, `category_${filterCategory}_questions.json`)
+                    }}
+                  >
+                    JSON – Category Questions
                   </Button>
                 </Group>
               </Stack>
@@ -1052,10 +1159,9 @@ export function Admin() {
             {/* ── Export Scores ── */}
             <Card shadow="sm" padding="lg" radius="md" withBorder>
               <Stack gap="md">
-                <Text fw={600}>Export Scores as CSV</Text>
+                <Text fw={600}>Export Scores</Text>
                 <Text size="sm" c="dimmed">
-                  Download all quiz scores. Each row contains: user_name, score, total_questions,
-                  percentage, category, sheet, created_at.
+                  Download all quiz scores. Available in CSV and JSON formats.
                 </Text>
 
                 {exportLoading ? (
@@ -1080,7 +1186,22 @@ export function Admin() {
                         downloadCsv(csv, 'all_scores.csv')
                       }}
                     >
-                      Export All Scores ({exportScores.length})
+                      CSV – All Scores ({exportScores.length})
+                    </Button>
+                    <Button
+                      color="grape"
+                      variant="light"
+                      leftSection={<Download size={16} />}
+                      onClick={() => {
+                        if (exportScores.length === 0) {
+                          alert('No scores to export')
+                          return
+                        }
+                        const json = scoresToJson(exportScores)
+                        downloadJson(json, 'all_scores.json')
+                      }}
+                    >
+                      JSON – All Scores ({exportScores.length})
                     </Button>
                   </Group>
                 )}
