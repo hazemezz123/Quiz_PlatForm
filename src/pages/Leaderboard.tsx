@@ -456,8 +456,24 @@ export function Leaderboard() {
     load()
   }, [userName])
 
+  // ─── Deduplicate: keep only each user's best score (highest percentage) ───
+  const bestScores = useMemo(() => {
+    const bestMap = new Map<string, Score>()
+    for (const s of scores) {
+      const existing = bestMap.get(s.user_name)
+      if (!existing || s.percentage > existing.percentage) {
+        bestMap.set(s.user_name, s)
+      }
+    }
+    return Array.from(bestMap.values()).sort((a, b) => {
+      if (b.percentage !== a.percentage) return b.percentage - a.percentage
+      if (b.score !== a.score) return b.score - a.score
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+  }, [scores])
+
   // ─── Separate scores by quiz type ───
-  const sheetScores = useMemo(() => scores.filter((s) => s.sheet !== null), [scores])
+  const sheetScores = useMemo(() => bestScores.filter((s) => s.sheet !== null), [bestScores])
 
   const mySheetScores = useMemo(() => myScores.filter((s) => s.sheet !== null), [myScores])
 
