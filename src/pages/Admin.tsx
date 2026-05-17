@@ -438,7 +438,6 @@ export function Admin() {
 
     const formatted = parsed.map((q: any) => {
       if (
-        !q.category ||
         !q.type ||
         !q.question ||
         !Array.isArray(q.options) ||
@@ -446,11 +445,11 @@ export function Admin() {
         !q.explanation
       ) {
         throw new Error(
-          'Each question must have: category, type, question, options (array), answer (number), explanation',
+          'Each question must have: type, question, options (array), answer (number), explanation',
         )
       }
       return {
-        category: String(q.category) as CategoryId,
+        category: sheetCategory,
         sheet: String(sheetName),
         type: q.type as QuestionType,
         question: String(q.question),
@@ -461,8 +460,25 @@ export function Admin() {
     })
 
     try {
-      // Insert the sheet record first
-      await insertSheet({ name: sheetName.trim(), category: sheetCategory })
+      const existingSheet = dbSheets.find((sheet) => sheet.name === sheetName.trim())
+      if (existingSheet && existingSheet.category !== sheetCategory) {
+        setJsonError(
+          `Sheet "${sheetName.trim()}" already exists under category "${existingSheet.category}"`,
+        )
+        return
+      }
+
+      if (!existingSheet) {
+        // Create sheet only for brand-new names; existing sheets are reused.
+        try {
+          await insertSheet({ name: sheetName.trim(), category: sheetCategory })
+        } catch (err) {
+          const code = typeof err === 'object' && err !== null ? (err as { code?: string }).code : undefined
+          if (code !== '23505') {
+            throw err
+          }
+        }
+      }
       await insertQuestions(formatted)
       setAddSuccess(
         `Successfully added ${formatted.length} question(s) to Sheet "${sheetName}" (${sheetCategory})`,

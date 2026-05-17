@@ -32,6 +32,7 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+*.roo
 
 # OS files
 Thumbs.db
