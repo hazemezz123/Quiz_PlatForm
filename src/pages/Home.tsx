@@ -4,10 +4,11 @@ import { motion } from 'framer-motion'
 import { Card, Button, Text, Stack, Group, Box, Badge, Loader, SimpleGrid } from '@mantine/core'
 import { AnimatedCard } from '../components/AnimatedCard'
 import { staggerContainer, fadeInUp, springTransitionFast } from '../lib/animations'
-import { FileText, Trophy, Sparkles, ArrowRight } from 'lucide-react'
+import { FileText, Trophy, Sparkles, ArrowRight, BookOpen } from 'lucide-react'
 import { useQuiz } from '../context/QuizContext'
 import { fetchSheets, fetchCategories } from '../lib/supabaseClient'
 import { CATEGORIES, getCategoryConfig, CategoryId } from '../lib/categories'
+import { hasDefinitions } from '../lib/definitions'
 import { Sheet } from '../types'
 
 export function Home() {
@@ -180,8 +181,7 @@ export function Home() {
                     radius="md"
                     withBorder
                     style={{
-                      cursor: hasQuestions ? 'pointer' : 'default',
-                      opacity: hasQuestions ? 1 : 0.6,
+                      cursor: 'pointer',
                     }}
                   >
                     <Stack gap="sm" align="center">
@@ -199,6 +199,24 @@ export function Home() {
                           {categorySheets.length} sheet(s)
                         </Badge>
                       )}
+                      {hasDefinitions(cat.id as CategoryId) && (
+                        <Badge color="blue" variant="light" size="xs">
+                          <Group gap={4}>
+                            <BookOpen size={10} />
+                            Definitions
+                          </Group>
+                        </Badge>
+                      )}
+                      <Button
+                        onClick={() => navigate(`/subject/${encodeURIComponent(cat.id)}`)}
+                        fullWidth
+                        variant="light"
+                        color={config?.color ?? 'teal'}
+                        size="sm"
+                        leftSection={<BookOpen size={14} />}
+                      >
+                        View Subject
+                      </Button>
                       {hasQuestions ? (
                         <Button
                           onClick={() => handleSelectCategory(cat.id)}

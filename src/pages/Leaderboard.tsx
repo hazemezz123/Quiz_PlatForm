@@ -12,17 +12,18 @@ import {
   Loader,
   ScrollArea,
   Tabs,
-  Select,
   Avatar,
   Box,
   Divider,
+  Tooltip,
 } from '@mantine/core'
 import { Trophy, Star, ArrowLeft, Crown, Medal, Award } from 'lucide-react'
-import { Score, Sheet } from '../types'
-import { fetchLeaderboard, fetchScoresByUser, fetchSheets } from '../lib/supabaseClient'
+import { Score } from '../types'
+import { fetchLeaderboard, fetchScoresByUser } from '../lib/supabaseClient'
 import { useQuiz } from '../context/QuizContext'
 import { getDegree, getRankColor } from '../lib/degrees'
 import { getCategoryConfig } from '../lib/categories'
+import { buildUserQuizTooltip } from '../lib/leaderboardTooltip.js'
 import { springTransition, usePrefersReducedMotion } from '../lib/animations'
 
 /* ─── Podium Card for Top 3 ─── */
@@ -31,11 +32,13 @@ function PodiumCard({
   rank,
   userName,
   isCategory,
+  quizTooltip,
 }: {
   score: Score
   rank: number
   userName: string
   isCategory: boolean
+  quizTooltip: string[]
 }) {
   const degree = getDegree(score.percentage)
   const reducedMotion = usePrefersReducedMotion()
@@ -147,14 +150,22 @@ function PodiumCard({
             </Text>
           </Group>
 
-          <Text component="div" fw={700} size="md" ta="center" lineClamp={1}>
-            {score.user_name}
-            {isCurrentUser && (
-              <Badge ml="xs" size="xs" color="teal" variant="filled">
-                You
-              </Badge>
-            )}
-          </Text>
+          <Tooltip
+            label={quizTooltip.length > 0 ? quizTooltip.map((line) => <Text key={line} size="xs">{line}</Text>) : 'No quiz data'}
+            withArrow
+            multiline
+            w={260}
+            position="top"
+          >
+            <Text component="div" fw={700} size="md" ta="center" lineClamp={1}>
+              {score.user_name}
+              {isCurrentUser && (
+                <Badge ml="xs" size="xs" color="teal" variant="filled">
+                  You
+                </Badge>
+              )}
+            </Text>
+          </Tooltip>
 
           <Badge color={degree.color} variant="light" leftSection={degree.icon} size="sm">
             {degree.label}
@@ -177,9 +188,9 @@ function PodiumCard({
               {score.category}
             </Badge>
           )}
-          {!isCategory && score.sheet && (
+          {!isCategory && (
             <Badge size="xs" variant="dot" color="grape">
-              {score.sheet}
+              {score.sheet || score.category || '-'}
             </Badge>
           )}
         </Stack>
@@ -205,10 +216,12 @@ function PodiumSection({
   topThree,
   userName,
   isCategory,
+  userQuizTooltips,
 }: {
   topThree: Score[]
   userName: string
   isCategory: boolean
+  userQuizTooltips: Map<string, string[]>
 }) {
   if (topThree.length === 0) return null
 
@@ -234,6 +247,7 @@ function PodiumSection({
           rank={rankMap[idx] || idx + 1}
           userName={userName}
           isCategory={isCategory}
+          quizTooltip={userQuizTooltips.get(s.user_name) ?? []}
         />
       ))}
     </Group>
@@ -245,10 +259,12 @@ function LeaderboardTable({
   scores,
   userName,
   isCategory,
+  userQuizTooltips,
 }: {
   scores: Score[]
   userName: string
   isCategory: boolean
+  userQuizTooltips: Map<string, string[]>
 }) {
   return (
     <Card shadow="sm" padding={0} radius="md" withBorder>
@@ -261,7 +277,7 @@ function LeaderboardTable({
               <Table.Th>Degree</Table.Th>
               <Table.Th>Score</Table.Th>
               <Table.Th>Accuracy</Table.Th>
-              {isCategory ? <Table.Th>Category</Table.Th> : <Table.Th>Sheet</Table.Th>}
+              {isCategory ? <Table.Th>Category</Table.Th> : <Table.Th>Quiz</Table.Th>}
               <Table.Th>Date</Table.Th>
             </Table.Tr>
           </Table.Thead>
@@ -286,14 +302,28 @@ function LeaderboardTable({
                       </Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text component="div" fw={s.user_name === userName ? 700 : 400}>
-                        {s.user_name}
-                        {s.user_name === userName && (
-                          <Badge ml="xs" size="xs" color="teal" variant="filled">
-                            You
-                          </Badge>
-                        )}
-                      </Text>
+                      <Tooltip
+                        label={
+                          userQuizTooltips.get(s.user_name)?.map((line) => (
+                            <Text key={line} size="xs">
+                              {line}
+                            </Text>
+                          )) ?? 'No quiz data'
+                        }
+                        withArrow
+                        multiline
+                        w={260}
+                        position="top"
+                      >
+                        <Text component="div" fw={s.user_name === userName ? 700 : 400}>
+                          {s.user_name}
+                          {s.user_name === userName && (
+                            <Badge ml="xs" size="xs" color="teal" variant="filled">
+                              You
+                            </Badge>
+                          )}
+                        </Text>
+                      </Tooltip>
                     </Table.Td>
                     <Table.Td>
                       <Badge color={degree.color} variant="light" leftSection={degree.icon}>
@@ -325,11 +355,11 @@ function LeaderboardTable({
                       </Table.Td>
                     ) : (
                       <Table.Td>
-                        <Badge size="sm" variant="dot" color="grape">
-                          {s.sheet || '-'}
-                        </Badge>
-                      </Table.Td>
-                    )}
+                      <Badge size="sm" variant="dot" color="grape">
+                        {s.sheet || s.category || '-'}
+                      </Badge>
+                    </Table.Td>
+                  )}
                     <Table.Td>
                       <Text size="xs" c="dimmed">
                         {new Date(s.created_at).toLocaleDateString()}
@@ -358,7 +388,7 @@ function MyScoresTable({ scores, isCategory }: { scores: Score[]; isCategory: bo
               <Table.Th>Degree</Table.Th>
               <Table.Th>Score</Table.Th>
               <Table.Th>Accuracy</Table.Th>
-              {isCategory ? <Table.Th>Category</Table.Th> : <Table.Th>Sheet</Table.Th>}
+              {isCategory ? <Table.Th>Category</Table.Th> : <Table.Th>Quiz</Table.Th>}
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -409,7 +439,7 @@ function MyScoresTable({ scores, isCategory }: { scores: Score[]; isCategory: bo
                     ) : (
                       <Table.Td>
                         <Badge size="sm" variant="dot" color="grape">
-                          {s.sheet || '-'}
+                          {s.sheet || s.category || '-'}
                         </Badge>
                       </Table.Td>
                     )}
@@ -430,23 +460,18 @@ export function Leaderboard() {
   const { userName } = useQuiz()
   const [scores, setScores] = useState<Score[]>([])
   const [myScores, setMyScores] = useState<Score[]>([])
-  const [sheetData, setSheetData] = useState<Sheet[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filterSheet, setFilterSheet] = useState<string | null>(null)
-  const [filterCategory, setFilterCategory] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [all, mine, shs] = await Promise.all([
+        const [all, mine] = await Promise.all([
           fetchLeaderboard(200),
           fetchScoresByUser(userName, 50),
-          fetchSheets(),
         ])
         setScores(all)
         setMyScores(mine)
-        setSheetData(shs)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load leaderboard')
       } finally {
@@ -456,52 +481,71 @@ export function Leaderboard() {
     load()
   }, [userName])
 
-  // ─── Deduplicate: keep only each user's best score (highest percentage) ───
-  const bestScores = useMemo(() => {
-    const bestMap = new Map<string, Score>()
-    for (const s of scores) {
-      const existing = bestMap.get(s.user_name)
-      if (!existing || s.percentage > existing.percentage) {
-        bestMap.set(s.user_name, s)
+  // ─── Sum each user's best attempt per quiz target ───
+  const globalScores = useMemo(() => {
+    const byUser = new Map<string, Map<string, Score>>()
+
+    for (const score of scores) {
+      const quizKey = score.sheet || score.category || 'unknown'
+      const userMap = byUser.get(score.user_name) ?? new Map<string, Score>()
+      const existing = userMap.get(quizKey)
+
+      if (
+        !existing ||
+        score.percentage > existing.percentage ||
+        (score.percentage === existing.percentage && score.score > existing.score)
+      ) {
+        userMap.set(quizKey, score)
       }
+
+      byUser.set(score.user_name, userMap)
     }
-    return Array.from(bestMap.values()).sort((a, b) => {
-      if (b.percentage !== a.percentage) return b.percentage - a.percentage
-      if (b.score !== a.score) return b.score - a.score
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    })
+
+    return Array.from(byUser.values())
+      .map((userMap) => {
+        const bestAttempts = Array.from(userMap.values())
+        const totalScore = bestAttempts.reduce((sum, row) => sum + row.score, 0)
+        const totalQuestions = bestAttempts.reduce((sum, row) => sum + row.total_questions, 0)
+        const percentage = totalQuestions > 0 ? Math.round((totalScore / totalQuestions) * 100) : 0
+        const createdAt = bestAttempts.reduce((latest, row) => {
+          return new Date(row.created_at).getTime() > new Date(latest).getTime()
+            ? row.created_at
+            : latest
+        }, bestAttempts[0]?.created_at ?? new Date(0).toISOString())
+
+        return {
+          id: bestAttempts[0]?.id ?? `global-${createdAt}`,
+          user_name: bestAttempts[0]?.user_name ?? '',
+          score: totalScore,
+          total_questions: totalQuestions,
+          percentage,
+          category: null,
+          sheet: 'All quizzes',
+          created_at: createdAt,
+        }
+      })
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score
+        if (b.percentage !== a.percentage) return b.percentage - a.percentage
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      })
   }, [scores])
 
-  // ─── Separate scores by quiz type ───
-  const sheetScores = useMemo(() => bestScores.filter((s) => s.sheet !== null), [bestScores])
-
-  const mySheetScores = useMemo(() => myScores.filter((s) => s.sheet !== null), [myScores])
-
-  // ─── Filter options ───
-  const sheets = useMemo(() => sheetData.map((s) => s.name), [sheetData])
-
-  // ─── Get category for a sheet name ───
-  const getSheetCategory = useMemo(
-    () => (sheetName: string) => sheetData.find((s) => s.name === sheetName)?.category ?? null,
-    [sheetData],
-  )
-
-  // ─── Filtered scores ───
-  const filteredSheetScores = useMemo(() => {
-    let result = sheetScores
-    if (filterSheet) {
-      result = result.filter((s) => s.sheet === filterSheet)
+  const mySheetScores = myScores
+  const userQuizTooltips = useMemo(() => {
+    const grouped = new Map<string, Score[]>()
+    for (const score of scores) {
+      const list = grouped.get(score.user_name) ?? []
+      list.push(score)
+      grouped.set(score.user_name, list)
     }
-    if (filterCategory) {
-      result = result.filter((s) => {
-        const cat = s.category ?? getSheetCategory(s.sheet ?? '')
-        return cat === filterCategory
-      })
-    }
-    return result
-  }, [sheetScores, filterSheet, filterCategory, getSheetCategory])
 
-  const sheetTopThree = filteredSheetScores.slice(0, 3)
+    return new Map(
+      Array.from(grouped.entries()).map(([user, userScores]) => [user, buildUserQuizTooltip(userScores)]),
+    )
+  }, [scores])
+
+  const sheetTopThree = globalScores.slice(0, 3)
 
   if (loading) {
     return (
@@ -559,28 +603,6 @@ export function Leaderboard() {
 
         <Tabs.Panel value="global" pt="md">
           <Stack gap="md">
-            <Group justify="center">
-              <Select
-                placeholder="Filter by category"
-                data={Array.from(new Set(sheetData.map((s) => s.category))).map((cat) => ({
-                  value: cat,
-                  label: cat,
-                }))}
-                value={filterCategory}
-                onChange={setFilterCategory}
-                clearable
-                style={{ minWidth: 200 }}
-              />
-              <Select
-                placeholder="Filter by sheet"
-                data={sheets}
-                value={filterSheet}
-                onChange={setFilterSheet}
-                clearable
-                style={{ minWidth: 200 }}
-              />
-            </Group>
-
             {sheetTopThree.length > 0 && (
               <Box
                 py="lg"
@@ -595,13 +617,23 @@ export function Leaderboard() {
                     Top Performers
                   </Text>
                 </Group>
-                <PodiumSection topThree={sheetTopThree} userName={userName} isCategory={false} />
-              </Box>
+                <PodiumSection
+                  topThree={sheetTopThree}
+                  userName={userName}
+                  isCategory={false}
+                  userQuizTooltips={userQuizTooltips}
+                />
+            </Box>
             )}
 
             <Divider label="Full Rankings" labelPosition="center" />
 
-            <LeaderboardTable scores={filteredSheetScores} userName={userName} isCategory={false} />
+            <LeaderboardTable
+              scores={globalScores}
+              userName={userName}
+              isCategory={false}
+              userQuizTooltips={userQuizTooltips}
+            />
           </Stack>
         </Tabs.Panel>
 
