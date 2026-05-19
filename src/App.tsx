@@ -19,6 +19,9 @@ const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m
 const SubjectPage = lazy(() =>
   import('./pages/SubjectPage').then((m) => ({ default: m.SubjectPage })),
 )
+const DefinitionQuiz = lazy(() =>
+  import('./pages/DefinitionQuiz').then((m) => ({ default: m.DefinitionQuiz })),
+)
 
 function PageLoader() {
   return (
@@ -42,6 +45,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Entry />} />
                 <Route path="/subject/:category" element={<SubjectPage />} />
+                <Route path="/def-quiz/:category" element={<DefinitionQuiz />} />
                 <Route path="/quiz/:category" element={<Quiz />} />
                 <Route path="/sheet/:sheet" element={<Quiz />} />
                 <Route path="/result" element={<Result />} />

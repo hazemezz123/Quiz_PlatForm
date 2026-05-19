@@ -19,17 +19,17 @@ import {
 } from '@mantine/core'
 import { AnimatedCard } from '../components/AnimatedCard'
 import { staggerContainer, fadeInUp, springTransitionFast } from '../lib/animations'
-import { ArrowLeft, ArrowRight, FileText, Search, BookOpen } from 'lucide-react'
+import { ArrowLeft, ArrowRight, FileText, Search, BookOpen, Lightbulb } from 'lucide-react'
 import { useQuiz } from '../context/QuizContext'
 import { fetchSheets, fetchCategories } from '../lib/supabaseClient'
-import { CATEGORIES, getCategoryConfig, CategoryId, CATEGORY_IDS } from '../lib/categories'
+import { getCategoryConfig, CategoryId, CATEGORY_IDS } from '../lib/categories'
 import { getDefinitionsForCategory, hasDefinitions, Definition } from '../lib/definitions'
 import { Sheet } from '../types'
 
 export function SubjectPage() {
   const { category } = useParams<{ category: string }>()
   const navigate = useNavigate()
-  const { userName, startQuiz, startSheetQuiz } = useQuiz()
+  const { startQuiz, startSheetQuiz } = useQuiz()
   const [sheets, setSheets] = useState<Sheet[]>([])
   const [availableCategories, setAvailableCategories] = useState<CategoryId[]>([])
   const [loading, setLoading] = useState(true)
@@ -221,6 +221,62 @@ export function SubjectPage() {
                 onClick={() => handleSelectCategory(categoryId)}
               >
                 Start Big Quiz
+              </Button>
+            </Stack>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* ─── Definition Quiz ─── */}
+      {hasDefs && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
+          <Card
+            shadow="md"
+            padding="xl"
+            radius="md"
+            withBorder
+            style={{
+              background: `linear-gradient(135deg, var(--mantine-color-dark-7), var(--mantine-color-dark-6))`,
+              borderColor: 'var(--mantine-color-blue-5)',
+              borderWidth: '2px',
+            }}
+          >
+            <Stack gap="md" align="center">
+              <Box
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background:
+                    'linear-gradient(135deg, var(--mantine-color-blue-6), var(--mantine-color-blue-5))',
+                }}
+              >
+                <Lightbulb size={28} strokeWidth={1.5} color="white" />
+              </Box>
+              <Text fw={700} size="xl" ta="center" c="blue.3">
+                Definition Quiz — {config?.label}
+              </Text>
+              <Text c="dimmed" size="sm" ta="center">
+                Type the correct term for each definition. 1–3 spelling errors get a hint, more than
+                3 marks it wrong!
+              </Text>
+              <Badge color="blue" variant="light" size="sm">
+                {definitions.length} terms to practice
+              </Badge>
+              <Button
+                size="lg"
+                color="blue"
+                rightSection={<ArrowRight size={18} />}
+                onClick={() => navigate(`/def-quiz/${encodeURIComponent(categoryId)}`)}
+              >
+                Start Definition Quiz
               </Button>
             </Stack>
           </Card>
