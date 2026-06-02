@@ -7,6 +7,7 @@ interface CodeRendererProps {
   text: string
   maxCodeWidth?: number
   textSize?: string
+  dir?: 'rtl' | 'ltr'
 }
 
 function normalizeLang(lang: string): string {
@@ -81,7 +82,7 @@ function getLangLabel(lang: string): string {
   return map[lang] || lang.charAt(0).toUpperCase() + lang.slice(1)
 }
 
-export function CodeRenderer({ text, maxCodeWidth = 280, textSize = 'sm' }: CodeRendererProps) {
+export function CodeRenderer({ text, maxCodeWidth = 280, textSize = 'sm', dir = 'ltr' }: CodeRendererProps) {
   const parts = useMemo(() => {
     const regex = /```(\w+)?\n([\s\S]*?)```/g
     const result: { type: 'text' | 'code'; content: string; lang: string }[] = []
@@ -108,7 +109,7 @@ export function CodeRenderer({ text, maxCodeWidth = 280, textSize = 'sm' }: Code
   }, [text])
 
   return (
-    <Stack gap="xs">
+    <Stack gap="xs" dir={dir}>
       {parts.map((part, i) =>
         part.type === 'code' ? (
           <div
@@ -174,7 +175,7 @@ export function CodeRenderer({ text, maxCodeWidth = 280, textSize = 'sm' }: Code
             </SyntaxHighlighter>
           </div>
         ) : (
-          <Text key={i} size={textSize} style={{ whiteSpace: 'pre-wrap' }}>
+          <Text key={i} size={textSize} dir={dir} style={{ whiteSpace: 'pre-wrap', textAlign: dir === 'rtl' ? 'right' : 'left' }}>
             {part.content}
           </Text>
         )

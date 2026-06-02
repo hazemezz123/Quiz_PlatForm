@@ -5,6 +5,7 @@ import { Card, Button, Text, Stack, Progress, RingProgress, Box, Badge, Group } 
 import { Trophy, Check, X } from 'lucide-react'
 import { useQuiz } from '../context/QuizContext'
 import { getDegree } from '../lib/degrees'
+import { rtlDir } from '../lib/rtl'
 import {
   scaleIn,
   fadeInUp,
@@ -171,10 +172,11 @@ export function Result() {
                 const userAnswer = answers[q.id]
                 const isCorrect = userAnswer === q.answer
                 const isSkipped = userAnswer === -1
+                const textDir = rtlDir(q.question)
 
                 let statusBadge = (
                   <Badge color={isCorrect ? 'teal' : 'red'} variant="light" size="sm">
-                    {isCorrect ? 'Correct' : isSkipped ? 'Wrong (Skipped)' : 'Wrong'}
+                    {isCorrect ? (textDir === 'rtl' ? 'صحيح' : 'Correct') : isSkipped ? (textDir === 'rtl' ? 'خطأ (تخطي)' : 'Wrong (Skipped)') : (textDir === 'rtl' ? 'خطأ' : 'Wrong')}
                   </Badge>
                 )
 
@@ -188,10 +190,10 @@ export function Result() {
                     exit={reducedMotion ? {} : { opacity: 0, scale: 0.95 }}
                     transition={{ ...springTransition, delay: index * 0.04 }}
                   >
-                    <Card shadow="sm" padding="lg" radius="md" withBorder>
+                    <Card shadow="sm" padding="lg" radius="md" withBorder dir={textDir}>
                       <Stack gap="sm">
-                        <Group justify="space-between" wrap="nowrap" align="flex-start">
-                          <Text fw={600} size="sm" style={{ whiteSpace: 'pre-wrap' }}>
+                        <Group justify={textDir === 'rtl' ? 'flex-start' : 'space-between'} wrap="nowrap" align="flex-start">
+                          <Text fw={600} size="sm" dir={textDir} style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}>
                             {originalIndex + 1}. {q.question}
                           </Text>
                           {statusBadge}
@@ -229,22 +231,23 @@ export function Result() {
                                   padding: 'var(--mantine-spacing-sm)',
                                 }}
                               >
-                                <Group justify="space-between" wrap="nowrap" align="flex-start">
+                                <Group justify={textDir === 'rtl' ? 'flex-start' : 'space-between'} wrap="nowrap" align="flex-start">
                                   <Text
                                     size="sm"
                                     fw={isUserPick ? 600 : 400}
-                                    style={{ whiteSpace: 'pre-wrap' }}
+                                    dir={textDir}
+                                    style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}
                                   >
                                     {opt}
                                   </Text>
                                   {isCorrectOpt && (
                                     <Badge color="teal" size="xs" variant="filled">
-                                      Correct
+                                      {textDir === 'rtl' ? 'صحيح' : 'Correct'}
                                     </Badge>
                                   )}
                                   {isUserPick && !isCorrectOpt && (
                                     <Badge color="red" size="xs" variant="filled">
-                                      Your answer
+                                      {textDir === 'rtl' ? 'إجابتك' : 'Your answer'}
                                     </Badge>
                                   )}
                                 </Group>
@@ -255,6 +258,7 @@ export function Result() {
 
                         <Box
                           p="sm"
+                          dir={textDir}
                           style={{
                             borderRadius: 'var(--mantine-radius-md)',
                             background: 'var(--mantine-color-dark-7)',
@@ -263,9 +267,9 @@ export function Result() {
                         >
                           <Text size="xs" c="dimmed">
                             <Text span fw={600} c="gray.4">
-                              Explanation:
+                              {textDir === 'rtl' ? 'التوضيح:' : 'Explanation:'}
                             </Text>{' '}
-                            <Text span style={{ whiteSpace: 'pre-wrap' }}>
+                            <Text span dir={textDir} style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}>
                               {q.explanation}
                             </Text>
                           </Text>

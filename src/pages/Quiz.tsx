@@ -6,6 +6,7 @@ import { useQuiz } from '../context/QuizContext'
 import { SavedProgress } from '../context/QuizContext'
 import { CodeRenderer } from '../components/CodeRenderer'
 import { CategoryId } from '../lib/categories'
+import { rtlDir } from '../lib/rtl'
 import {
   slideVariants,
   staggerContainerFast,
@@ -237,6 +238,7 @@ export function Quiz() {
   const currentQuestion = questions[currentIndex]
   const progress = ((currentIndex + 1) / questions.length) * 100
   const answeredCount = Object.keys(answers).length
+  const textDir = rtlDir(currentQuestion.question)
 
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
@@ -404,9 +406,9 @@ export function Quiz() {
           exit="exit"
           transition={springTransition}
         >
-          <Card shadow="sm" padding="xl" radius="md" withBorder>
+          <Card shadow="sm" padding="xl" radius="md" withBorder dir={textDir}>
             <Stack gap="lg">
-              <CodeRenderer text={currentQuestion.question} maxCodeWidth={600} textSize="lg" />
+              <CodeRenderer text={currentQuestion.question} maxCodeWidth={600} textSize="lg" dir={textDir} />
 
               <motion.div
                 variants={staggerContainerFast}
@@ -488,18 +490,19 @@ export function Quiz() {
                           <Text
                             fw={selected ? 600 : 400}
                             size="sm"
-                            style={{ whiteSpace: 'pre-wrap' }}
+                            dir={textDir}
+                            style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}
                           >
                             {option}
                           </Text>
                           {isSubmitted && isCorrect && (
                             <Badge color="teal" size="xs" variant="filled">
-                              Correct
+                              {textDir === 'rtl' ? 'صحيح' : 'Correct'}
                             </Badge>
                           )}
                           {isSubmitted && selected && !isCorrect && (
                             <Badge color="red" size="xs" variant="filled">
-                              Your answer
+                              {textDir === 'rtl' ? 'إجابتك' : 'Your answer'}
                             </Badge>
                           )}
                         </Group>
@@ -520,6 +523,7 @@ export function Quiz() {
                     <Card
                       padding="sm"
                       radius="md"
+                      dir={textDir}
                       style={{
                         background: 'var(--mantine-color-dark-7)',
                         border: '1px solid var(--mantine-color-dark-6)',
@@ -527,18 +531,18 @@ export function Quiz() {
                     >
                         <Text size="xs" c="dimmed">
                           <Text span fw={600} c="gray.4">
-                            Correct answer:
+                            {textDir === 'rtl' ? 'الإجابة الصحيحة:' : 'Correct answer:'}
                           </Text>{' '}
-                          <Text span style={{ whiteSpace: 'pre-wrap' }}>
+                          <Text span dir={textDir} style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}>
                             {currentQuestion.options[currentQuestion.answer]}
                           </Text>
                         </Text>
                       {currentQuestion.explanation && (
                         <Text size="xs" c="dimmed" mt={4}>
                           <Text span fw={600} c="gray.4">
-                            Explanation:
+                            {textDir === 'rtl' ? 'التوضيح:' : 'Explanation:'}
                           </Text>{' '}
-                          <Text span style={{ whiteSpace: 'pre-wrap' }}>
+                          <Text span dir={textDir} style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}>
                             {currentQuestion.explanation}
                           </Text>
                         </Text>
@@ -550,8 +554,8 @@ export function Quiz() {
 
               {!submittedAnswers[currentQuestion.id] && (
                 <Group justify="center" gap="xs">
-                  <Text size="xs" c="dimmed" ta="center" style={{ fontStyle: 'italic' }}>
-                    Select an answer or skip to continue
+                  <Text size="xs" c="dimmed" ta={textDir === 'rtl' ? 'right' : 'center'} dir={textDir} style={{ fontStyle: 'italic' }}>
+                    {textDir === 'rtl' ? 'اختر إجابة أو تخطّ إلى السؤال التالي' : 'Select an answer or skip to continue'}
                   </Text>
                   <Button
                     variant="subtle"
