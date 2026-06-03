@@ -1,5 +1,5 @@
 import { createClient, Session } from '@supabase/supabase-js'
-import { Question, Score, Sheet } from '../types'
+import { Question, QuestionType, Score, Sheet } from '../types'
 import { CategoryId } from './categories'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
@@ -82,7 +82,28 @@ export async function fetchSheets(): Promise<Sheet[]> {
 
   if (error) throw error
 
-  return data as Sheet[]
+  const sheets = data as Sheet[]
+
+  const { data: typeData, error: typeError } = await supabase
+    .from('questions')
+    .select('sheet, type')
+
+  if (typeError) throw typeError
+
+  const typesBySheet: Record<string, QuestionType[]> = {}
+  for (const row of typeData) {
+    const s = row.sheet ?? ''
+    if (!typesBySheet[s]) typesBySheet[s] = []
+    if (!typesBySheet[s].includes(row.type as QuestionType)) {
+      typesBySheet[s].push(row.type as QuestionType)
+    }
+  }
+
+  for (const sheet of sheets) {
+    sheet.questionTypes = typesBySheet[sheet.name] ?? []
+  }
+
+  return sheets
 }
 
 export async function fetchQuestionsBySheet(sheet: string): Promise<Question[]> {

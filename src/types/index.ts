@@ -18,6 +18,7 @@ export interface Sheet {
   category: CategoryId
   is_official?: boolean
   created_at?: string
+  questionTypes?: QuestionType[]
 }
 
 export interface Score {
