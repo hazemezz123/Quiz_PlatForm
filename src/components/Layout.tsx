@@ -1,24 +1,22 @@
-import { Container, Text, Group, Box, Stack, Button } from "@mantine/core";
-import { ReactNode } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { LayoutList, Trophy, Heart } from "lucide-react";
+import { Container, Text, Group, Box, Stack, Button } from '@mantine/core'
+import { ReactNode } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { LayoutList, Trophy, Heart } from 'lucide-react'
 
 interface LayoutProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
 export function Layout({ children }: LayoutProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate = useNavigate()
+  const location = useLocation()
 
   return (
-    <Box
-      style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
-    >
+    <Box style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Box
         style={{
-          borderBottom: "1px solid var(--mantine-color-dark-6)",
-          background: "var(--mantine-color-dark-8)",
+          borderBottom: '1px solid var(--mantine-color-dark-6)',
+          background: 'var(--mantine-color-dark-8)',
         }}
       >
         <Container size="md" py="md">
@@ -28,32 +26,28 @@ export function Layout({ children }: LayoutProps) {
               alt="Indentify"
               style={{
                 width: 120,
-                objectFit: "contain",
+                objectFit: 'contain',
                 margin: -10,
-                cursor: "pointer",
+                cursor: 'pointer',
               }}
-              onClick={() => navigate("/")}
+              onClick={() => navigate('/')}
             />
             <Group gap="xs">
               <Button
-                variant={location.pathname === "/" ? "light" : "subtle"}
+                variant={location.pathname === '/' ? 'light' : 'subtle'}
                 color="teal"
                 size="sm"
                 leftSection={<LayoutList size={16} />}
-                onClick={() => navigate("/")}
+                onClick={() => navigate('/')}
               >
                 Quizzes
               </Button>
               <Button
-                variant={
-                  location.pathname.startsWith("/leaderboard")
-                    ? "light"
-                    : "subtle"
-                }
+                variant={location.pathname.startsWith('/leaderboard') ? 'light' : 'subtle'}
                 color="yellow"
                 size="sm"
                 leftSection={<Trophy size={16} />}
-                onClick={() => navigate("/leaderboard")}
+                onClick={() => navigate('/leaderboard')}
               >
                 Leaderboard
               </Button>
@@ -70,8 +64,8 @@ export function Layout({ children }: LayoutProps) {
 
       <Box
         style={{
-          borderTop: "1px solid var(--mantine-color-dark-6)",
-          background: "var(--mantine-color-dark-8)",
+          borderTop: '1px solid var(--mantine-color-dark-6)',
+          background: 'var(--mantine-color-dark-8)',
         }}
       >
         <Container size="md" py="sm">
@@ -91,8 +85,8 @@ export function Layout({ children }: LayoutProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  color: "var(--mantine-color-dimmed)",
-                  display: "flex",
+                  color: 'var(--mantine-color-dimmed)',
+                  display: 'flex',
                 }}
               >
                 <svg
@@ -115,8 +109,8 @@ export function Layout({ children }: LayoutProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  color: "var(--mantine-color-dimmed)",
-                  display: "flex",
+                  color: 'var(--mantine-color-dimmed)',
+                  display: 'flex',
                 }}
               >
                 <svg
@@ -140,5 +134,5 @@ export function Layout({ children }: LayoutProps) {
         </Container>
       </Box>
     </Box>
-  );
+  )
 }

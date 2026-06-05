@@ -12,8 +12,10 @@ function validateName(name: string): string | null {
   const trimmed = name.trim()
   if (!trimmed) return 'Name is required'
   if (trimmed.length < MIN_NAME_LENGTH) return `Name must be at least ${MIN_NAME_LENGTH} characters`
-  if (trimmed.length > MAX_NAME_LENGTH) return `Name must be no more than ${MAX_NAME_LENGTH} characters`
-  if (!NAME_REGEX.test(trimmed)) return 'Name can only contain letters, numbers, spaces, hyphens, and underscores'
+  if (trimmed.length > MAX_NAME_LENGTH)
+    return `Name must be no more than ${MAX_NAME_LENGTH} characters`
+  if (!NAME_REGEX.test(trimmed))
+    return 'Name can only contain letters, numbers, spaces, hyphens, and underscores'
   return null
 }
 
@@ -43,9 +45,7 @@ export function Entry() {
     }
     const trimmed = name.trim()
     setUserName(trimmed)
-    registerUser(trimmed).catch((err) =>
-      console.error('Failed to register user:', err)
-    )
+    registerUser(trimmed).catch((err) => console.error('Failed to register user:', err))
     navigate('/')
   }
 
@@ -81,13 +81,7 @@ export function Entry() {
               <Text size="xs" c="dimmed" ta="right">
                 {name.length}/{MAX_NAME_LENGTH}
               </Text>
-              <Button
-                type="submit"
-                fullWidth
-                size="md"
-                color="teal"
-                disabled={!name.trim()}
-              >
+              <Button type="submit" fullWidth size="md" color="teal" disabled={!name.trim()}>
                 Get Started
               </Button>
             </Stack>

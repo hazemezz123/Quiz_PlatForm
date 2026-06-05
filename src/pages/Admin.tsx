@@ -20,6 +20,7 @@ import {
   Loader,
   SimpleGrid,
   Box,
+  FileInput,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import {
@@ -280,6 +281,7 @@ export function Admin() {
 
   // Add form state
   const [jsonInput, setJsonInput] = useState('')
+  const [jsonFile, setJsonFile] = useState<File | null>(null)
   const [sheetName, setSheetName] = useState('')
   const [sheetCategory, setSheetCategory] = useState<CategoryId | null>(null)
   const [jsonError, setJsonError] = useState('')
@@ -424,9 +426,24 @@ export function Admin() {
       return
     }
 
+    if (!jsonFile && !jsonInput.trim()) {
+      setJsonError('Either upload a JSON file or enter JSON content')
+      return
+    }
+
+    // Get JSON content from either file or textarea
+    let jsonString = jsonInput
+    if (jsonFile) {
+      try {
+        jsonString = await jsonFile.text()
+      } catch {
+        setJsonError('Failed to read the selected file')
+        return
+      }
+    }
     let parsed: any[]
     try {
-      parsed = JSON.parse(jsonInput)
+      parsed = JSON.parse(jsonString)
       if (!Array.isArray(parsed)) {
         setJsonError('JSON must be an array of question objects')
         return
@@ -473,7 +490,8 @@ export function Admin() {
         try {
           await insertSheet({ name: sheetName.trim(), category: sheetCategory })
         } catch (err) {
-          const code = typeof err === 'object' && err !== null ? (err as { code?: string }).code : undefined
+          const code =
+            typeof err === 'object' && err !== null ? (err as { code?: string }).code : undefined
           if (code !== '23505') {
             throw err
           }
@@ -484,6 +502,7 @@ export function Admin() {
         `Successfully added ${formatted.length} question(s) to Sheet "${sheetName}" (${sheetCategory})`,
       )
       setJsonInput('')
+      setJsonFile(null)
       loadQuestions()
       loadSheets()
     } catch (err) {
@@ -764,6 +783,16 @@ export function Admin() {
                 required
               />
 
+              <FileInput
+                label="Upload JSON File"
+                placeholder="Select a JSON file from your device"
+                accept="application/json,.json"
+                value={jsonFile}
+                onChange={setJsonFile}
+                clearable
+                description="Alternatively, upload a JSON file instead of pasting content"
+              />
+
               <Textarea
                 label="Questions JSON"
                 placeholder={`[\n  {\n    "category": "Science",\n    "type": "mcq",\n    "question": "What is...?",\n    "options": ["A", "B", "C", "D"],\n    "answer": 0,\n    "explanation": "Because..."\n  }\n]`}
@@ -786,6 +815,7 @@ export function Admin() {
                   variant="default"
                   onClick={() => {
                     setJsonInput('')
+                    setJsonFile(null)
                     setJsonError('')
                     setAddSuccess('')
                   }}

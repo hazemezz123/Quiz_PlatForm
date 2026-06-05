@@ -82,7 +82,12 @@ function getLangLabel(lang: string): string {
   return map[lang] || lang.charAt(0).toUpperCase() + lang.slice(1)
 }
 
-export function CodeRenderer({ text, maxCodeWidth = 280, textSize = 'sm', dir = 'ltr' }: CodeRendererProps) {
+export function CodeRenderer({
+  text,
+  maxCodeWidth = 280,
+  textSize = 'sm',
+  dir = 'ltr',
+}: CodeRendererProps) {
   const parts = useMemo(() => {
     const regex = /```(\w+)?\n([\s\S]*?)```/g
     const result: { type: 'text' | 'code'; content: string; lang: string }[] = []
@@ -175,10 +180,15 @@ export function CodeRenderer({ text, maxCodeWidth = 280, textSize = 'sm', dir = 
             </SyntaxHighlighter>
           </div>
         ) : (
-          <Text key={i} size={textSize} dir={dir} style={{ whiteSpace: 'pre-wrap', textAlign: dir === 'rtl' ? 'right' : 'left' }}>
+          <Text
+            key={i}
+            size={textSize}
+            dir={dir}
+            style={{ whiteSpace: 'pre-wrap', textAlign: dir === 'rtl' ? 'right' : 'left' }}
+          >
             {part.content}
           </Text>
-        )
+        ),
       )}
     </Stack>
   )

@@ -1,0 +1,262 @@
+[
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "Which of the following are valid resource sharing options when a parent process creates a child process?",
+    "options": [
+      "Parent and child share no resources.",
+      "Child shares a subset of the parent's resources.",
+      "Parent and child share all resources.",
+      "All of the above."
+    ],
+    "answer": 3,
+    "explanation": "Depending on the operating system design, parent and child processes may share all, some, or none of their resources."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "When a parent process terminates, and the operating system does not allow a child to continue, what is the termination of all children, grandchildren, etc., called?",
+    "options": [
+      "Direct termination",
+      "Cascading termination",
+      "Abortive termination",
+      "Orphan termination"
+    ],
+    "answer": 1,
+    "explanation": "Cascading termination occurs when terminating a parent also terminates all of its descendants."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "What is the state of a process called when it has terminated, but its parent has not yet invoked the wait() system call?",
+    "options": ["Orphan", "Zombie", "Waiting", "Aborted"],
+    "answer": 1,
+    "explanation": "A zombie process has finished execution but still has an entry in the process table because its parent has not collected its status."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "In which Interprocess Communication (IPC) model is the communication entirely under the control of the user processes and NOT the operating system?",
+    "options": [
+      "Message Passing",
+      "Shared Memory",
+      "Direct Communication",
+      "Synchronous Communication"
+    ],
+    "answer": 1,
+    "explanation": "In shared memory, the OS only establishes the shared region, while user processes manage communication."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "What are the two basic operations provided by the message-passing IPC facility?",
+    "options": [
+      "open() and close()",
+      "read() and write()",
+      "send() and receive()",
+      "allocate() and free()"
+    ],
+    "answer": 2,
+    "explanation": "Message passing systems use send() and receive() operations for communication."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "If a parent process terminates without invoking wait(), and the child process is still running, the child process becomes an:",
+    "options": ["Zombie", "Orphan", "Independent process", "Aborted process"],
+    "answer": 1,
+    "explanation": "A running child whose parent terminates becomes an orphan process."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "When designing a communication link at the logical level, which of the following is a design consideration?",
+    "options": [
+      "Shared memory vs. Hardware bus",
+      "Direct or indirect communication",
+      "Network vs. Shared memory",
+      "Physical implementation"
+    ],
+    "answer": 1,
+    "explanation": "Logical communication design includes deciding whether communication is direct or indirect."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "A process calls exit(). What happens immediately as a result?",
+    "options": [
+      "Its parent terminates.",
+      "It asks the operating system to delete it.",
+      "It becomes a zombie.",
+      "It sends a message to its parent."
+    ],
+    "answer": 1,
+    "explanation": "The exit() system call requests that the operating system terminate the calling process."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "The wait() system call, when invoked by a parent, returns which of the following?",
+    "options": [
+      "The status information and pid of the terminated child.",
+      "A new process identifier for the child.",
+      "The amount of resources used by the child.",
+      "A message from the child process."
+    ],
+    "answer": 0,
+    "explanation": "wait() returns the PID and termination status of a child process."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "Which of the following is NOT a reason for cooperating processes?",
+    "options": ["Convenience", "Modularity", "Protection and security", "Computation speedup"],
+    "answer": 2,
+    "explanation": "Common reasons include information sharing, speedup, modularity, and convenience, not protection and security."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "A parent process can terminate its child processes using the ............ system call.",
+    "options": ["Exit()", "Abort()", "Wait()", "Create()"],
+    "answer": 1,
+    "explanation": "A parent process may use abort() to terminate a child process."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "In Interprocess Communication (IPC), processes communicate without using shared variables through ………",
+    "options": ["Shared memory", "Message passing", "Pipes", "System call"],
+    "answer": 1,
+    "explanation": "Message passing allows processes to communicate without shared variables."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "In interprocess communication (IPC) using message passing, the message size can be:",
+    "options": ["Fixed", "Variable", "Fixed or variable", "Dynamic"],
+    "answer": 2,
+    "explanation": "Message-passing systems may support either fixed-size or variable-size messages."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "mcq",
+    "question": "When a parent process does not call wait() and the child process terminates, the child process is called a ………..",
+    "options": ["Zombie", "Orphan", "Daemon", "Aborted"],
+    "answer": 0,
+    "explanation": "A terminated child whose parent has not yet called wait() is a zombie process."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "truefalse",
+    "question": "A child process always shares a subset of its parent's resources.",
+    "options": ["True", "False"],
+    "answer": 1,
+    "explanation": "A child process may share all, some, or none of its parent's resources."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "truefalse",
+    "question": "The abort() system call can be used by a parent to terminate the execution of a child process.",
+    "options": ["True", "False"],
+    "answer": 0,
+    "explanation": "A parent process can terminate a child process using abort()."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "truefalse",
+    "question": "An orphan process is a child that has terminated, but its parent has not yet called wait().",
+    "options": ["True", "False"],
+    "answer": 1,
+    "explanation": "That describes a zombie process. An orphan process is a running child whose parent has terminated."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "truefalse",
+    "question": "In the shared-memory model of IPC, processes communicate without resorting to shared variables.",
+    "options": ["True", "False"],
+    "answer": 1,
+    "explanation": "Shared-memory IPC depends on processes communicating through shared variables."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "truefalse",
+    "question": "The message size in a message-passing system is always fixed.",
+    "options": ["True", "False"],
+    "answer": 1,
+    "explanation": "Message size may be fixed or variable depending on the implementation."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "truefalse",
+    "question": "A major issue for shared memory IPC is providing a mechanism for user processes to synchronize their actions when accessing the shared memory.",
+    "options": ["True", "False"],
+    "answer": 0,
+    "explanation": "Synchronization is required to avoid race conditions when multiple processes access shared memory."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "truefalse",
+    "question": "Physical implementation of a communication link refers to design-level decisions like whether it is direct or indirect.",
+    "options": ["True", "False"],
+    "answer": 1,
+    "explanation": "Direct or indirect communication is a logical design decision, not a physical implementation issue."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "truefalse",
+    "question": "A process tree is formed by a parent process creating children processes, which in turn can create their own processes.",
+    "options": ["True", "False"],
+    "answer": 0,
+    "explanation": "Process creation naturally forms a hierarchical process tree."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "truefalse",
+    "question": "One reason a parent might abort a child process is that the task assigned to the child is no longer required.",
+    "options": ["True", "False"],
+    "answer": 0,
+    "explanation": "A parent may terminate a child if its work is no longer needed."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "truefalse",
+    "question": "In message passing, processes must establish a communication link and then exchange messages via the read() and write() operations.",
+    "options": ["True", "False"],
+    "answer": 1,
+    "explanation": "Message-passing systems use send() and receive() operations rather than read() and write()."
+  },
+  {
+    "category": "Operating System",
+    "sheet": "Lecture 7",
+    "type": "truefalse",
+    "question": "Inter-Process Communication (IPC) can be implemented using either shared memory or message passing.",
+    "options": ["True", "False"],
+    "answer": 0,
+    "explanation": "The two primary IPC models are shared memory and message passing."
+  }
+]

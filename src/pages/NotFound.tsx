@@ -1,9 +1,9 @@
-import { useNavigate } from "react-router-dom";
-import { Card, Button, Text, Stack } from "@mantine/core";
-import { Home, ArrowLeft } from "lucide-react";
+import { useNavigate } from 'react-router-dom'
+import { Card, Button, Text, Stack } from '@mantine/core'
+import { Home, ArrowLeft } from 'lucide-react'
 
 export function NotFound() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   return (
     <Stack align="center" gap="xl" pt="xl">
@@ -11,8 +11,7 @@ export function NotFound() {
         404
       </Text>
       <Text size="lg" c="dimmed" ta="center">
-        Page not found. The page you're looking for doesn't exist or has been
-        moved.
+        Page not found. The page you're looking for doesn't exist or has been moved.
       </Text>
       <Card shadow="sm" padding="lg" radius="md" withBorder maw={400} w="100%">
         <Stack gap="md" align="center">
@@ -21,7 +20,7 @@ export function NotFound() {
             size="md"
             color="teal"
             leftSection={<Home size={16} />}
-            onClick={() => navigate("/")}
+            onClick={() => navigate('/')}
           >
             Go Home
           </Button>
@@ -37,5 +36,5 @@ export function NotFound() {
         </Stack>
       </Card>
     </Stack>
-  );
+  )
 }

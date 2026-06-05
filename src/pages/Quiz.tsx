@@ -408,7 +408,12 @@ export function Quiz() {
         >
           <Card shadow="sm" padding="xl" radius="md" withBorder dir={textDir}>
             <Stack gap="lg">
-              <CodeRenderer text={currentQuestion.question} maxCodeWidth={600} textSize="lg" dir={textDir} />
+              <CodeRenderer
+                text={currentQuestion.question}
+                maxCodeWidth={600}
+                textSize="lg"
+                dir={textDir}
+              />
 
               <motion.div
                 variants={staggerContainerFast}
@@ -491,7 +496,10 @@ export function Quiz() {
                             fw={selected ? 600 : 400}
                             size="sm"
                             dir={textDir}
-                            style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}
+                            style={{
+                              whiteSpace: 'pre-wrap',
+                              textAlign: textDir === 'rtl' ? 'right' : 'left',
+                            }}
                           >
                             {option}
                           </Text>
@@ -529,20 +537,34 @@ export function Quiz() {
                         border: '1px solid var(--mantine-color-dark-6)',
                       }}
                     >
-                        <Text size="xs" c="dimmed">
-                          <Text span fw={600} c="gray.4">
-                            {textDir === 'rtl' ? 'الإجابة الصحيحة:' : 'Correct answer:'}
-                          </Text>{' '}
-                          <Text span dir={textDir} style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}>
-                            {currentQuestion.options[currentQuestion.answer]}
-                          </Text>
+                      <Text size="xs" c="dimmed">
+                        <Text span fw={600} c="gray.4">
+                          {textDir === 'rtl' ? 'الإجابة الصحيحة:' : 'Correct answer:'}
+                        </Text>{' '}
+                        <Text
+                          span
+                          dir={textDir}
+                          style={{
+                            whiteSpace: 'pre-wrap',
+                            textAlign: textDir === 'rtl' ? 'right' : 'left',
+                          }}
+                        >
+                          {currentQuestion.options[currentQuestion.answer]}
                         </Text>
+                      </Text>
                       {currentQuestion.explanation && (
                         <Text size="xs" c="dimmed" mt={4}>
                           <Text span fw={600} c="gray.4">
                             {textDir === 'rtl' ? 'التوضيح:' : 'Explanation:'}
                           </Text>{' '}
-                          <Text span dir={textDir} style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}>
+                          <Text
+                            span
+                            dir={textDir}
+                            style={{
+                              whiteSpace: 'pre-wrap',
+                              textAlign: textDir === 'rtl' ? 'right' : 'left',
+                            }}
+                          >
                             {currentQuestion.explanation}
                           </Text>
                         </Text>
@@ -554,8 +576,16 @@ export function Quiz() {
 
               {!submittedAnswers[currentQuestion.id] && (
                 <Group justify="center" gap="xs">
-                  <Text size="xs" c="dimmed" ta={textDir === 'rtl' ? 'right' : 'center'} dir={textDir} style={{ fontStyle: 'italic' }}>
-                    {textDir === 'rtl' ? 'اختر إجابة أو تخطّ إلى السؤال التالي' : 'Select an answer or skip to continue'}
+                  <Text
+                    size="xs"
+                    c="dimmed"
+                    ta={textDir === 'rtl' ? 'right' : 'center'}
+                    dir={textDir}
+                    style={{ fontStyle: 'italic' }}
+                  >
+                    {textDir === 'rtl'
+                      ? 'اختر إجابة أو تخطّ إلى السؤال التالي'
+                      : 'Select an answer or skip to continue'}
                   </Text>
                   <Button
                     variant="subtle"

@@ -151,7 +151,15 @@ function PodiumCard({
           </Group>
 
           <Tooltip
-            label={quizTooltip.length > 0 ? quizTooltip.map((line) => <Text key={line} size="xs">{line}</Text>) : 'No quiz data'}
+            label={
+              quizTooltip.length > 0
+                ? quizTooltip.map((line) => (
+                    <Text key={line} size="xs">
+                      {line}
+                    </Text>
+                  ))
+                : 'No quiz data'
+            }
             withArrow
             multiline
             w={260}
@@ -355,11 +363,11 @@ function LeaderboardTable({
                       </Table.Td>
                     ) : (
                       <Table.Td>
-                      <Badge size="sm" variant="dot" color="grape">
-                        {s.sheet || s.category || '-'}
-                      </Badge>
-                    </Table.Td>
-                  )}
+                        <Badge size="sm" variant="dot" color="grape">
+                          {s.sheet || s.category || '-'}
+                        </Badge>
+                      </Table.Td>
+                    )}
                     <Table.Td>
                       <Text size="xs" c="dimmed">
                         {new Date(s.created_at).toLocaleDateString()}
@@ -507,11 +515,14 @@ export function Leaderboard() {
         const totalScore = bestAttempts.reduce((sum, row) => sum + row.score, 0)
         const totalQuestions = bestAttempts.reduce((sum, row) => sum + row.total_questions, 0)
         const percentage = totalQuestions > 0 ? Math.round((totalScore / totalQuestions) * 100) : 0
-        const createdAt = bestAttempts.reduce((latest, row) => {
-          return new Date(row.created_at).getTime() > new Date(latest).getTime()
-            ? row.created_at
-            : latest
-        }, bestAttempts[0]?.created_at ?? new Date(0).toISOString())
+        const createdAt = bestAttempts.reduce(
+          (latest, row) => {
+            return new Date(row.created_at).getTime() > new Date(latest).getTime()
+              ? row.created_at
+              : latest
+          },
+          bestAttempts[0]?.created_at ?? new Date(0).toISOString(),
+        )
 
         return {
           id: bestAttempts[0]?.id ?? `global-${createdAt}`,
@@ -541,7 +552,10 @@ export function Leaderboard() {
     }
 
     return new Map(
-      Array.from(grouped.entries()).map(([user, userScores]) => [user, buildUserQuizTooltip(userScores)]),
+      Array.from(grouped.entries()).map(([user, userScores]) => [
+        user,
+        buildUserQuizTooltip(userScores),
+      ]),
     )
   }, [scores])
 
@@ -623,7 +637,7 @@ export function Leaderboard() {
                   isCategory={false}
                   userQuizTooltips={userQuizTooltips}
                 />
-            </Box>
+              </Box>
             )}
 
             <Divider label="Full Rankings" labelPosition="center" />

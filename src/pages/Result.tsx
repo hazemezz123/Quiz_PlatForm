@@ -174,9 +174,19 @@ export function Result() {
                 const isSkipped = userAnswer === -1
                 const textDir = rtlDir(q.question)
 
-                let statusBadge = (
+                const statusBadge = (
                   <Badge color={isCorrect ? 'teal' : 'red'} variant="light" size="sm">
-                    {isCorrect ? (textDir === 'rtl' ? 'صحيح' : 'Correct') : isSkipped ? (textDir === 'rtl' ? 'خطأ (تخطي)' : 'Wrong (Skipped)') : (textDir === 'rtl' ? 'خطأ' : 'Wrong')}
+                    {isCorrect
+                      ? textDir === 'rtl'
+                        ? 'صحيح'
+                        : 'Correct'
+                      : isSkipped
+                        ? textDir === 'rtl'
+                          ? 'خطأ (تخطي)'
+                          : 'Wrong (Skipped)'
+                        : textDir === 'rtl'
+                          ? 'خطأ'
+                          : 'Wrong'}
                   </Badge>
                 )
 
@@ -192,8 +202,20 @@ export function Result() {
                   >
                     <Card shadow="sm" padding="lg" radius="md" withBorder dir={textDir}>
                       <Stack gap="sm">
-                        <Group justify={textDir === 'rtl' ? 'flex-start' : 'space-between'} wrap="nowrap" align="flex-start">
-                          <Text fw={600} size="sm" dir={textDir} style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}>
+                        <Group
+                          justify={textDir === 'rtl' ? 'flex-start' : 'space-between'}
+                          wrap="nowrap"
+                          align="flex-start"
+                        >
+                          <Text
+                            fw={600}
+                            size="sm"
+                            dir={textDir}
+                            style={{
+                              whiteSpace: 'pre-wrap',
+                              textAlign: textDir === 'rtl' ? 'right' : 'left',
+                            }}
+                          >
                             {originalIndex + 1}. {q.question}
                           </Text>
                           {statusBadge}
@@ -231,12 +253,19 @@ export function Result() {
                                   padding: 'var(--mantine-spacing-sm)',
                                 }}
                               >
-                                <Group justify={textDir === 'rtl' ? 'flex-start' : 'space-between'} wrap="nowrap" align="flex-start">
+                                <Group
+                                  justify={textDir === 'rtl' ? 'flex-start' : 'space-between'}
+                                  wrap="nowrap"
+                                  align="flex-start"
+                                >
                                   <Text
                                     size="sm"
                                     fw={isUserPick ? 600 : 400}
                                     dir={textDir}
-                                    style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}
+                                    style={{
+                                      whiteSpace: 'pre-wrap',
+                                      textAlign: textDir === 'rtl' ? 'right' : 'left',
+                                    }}
                                   >
                                     {opt}
                                   </Text>
@@ -269,7 +298,14 @@ export function Result() {
                             <Text span fw={600} c="gray.4">
                               {textDir === 'rtl' ? 'التوضيح:' : 'Explanation:'}
                             </Text>{' '}
-                            <Text span dir={textDir} style={{ whiteSpace: 'pre-wrap', textAlign: textDir === 'rtl' ? 'right' : 'left' }}>
+                            <Text
+                              span
+                              dir={textDir}
+                              style={{
+                                whiteSpace: 'pre-wrap',
+                                textAlign: textDir === 'rtl' ? 'right' : 'left',
+                              }}
+                            >
                               {q.explanation}
                             </Text>
                           </Text>

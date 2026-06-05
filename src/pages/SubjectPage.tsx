@@ -322,26 +322,26 @@ export function SubjectPage() {
                       <Text fw={700} size="md" ta="center">
                         {sheet.name}
                       </Text>
-<Group gap="xs">
-                         <Badge color={config?.color ?? 'teal'} variant="light" size="sm">
-                           {sheet.category}
-                         </Badge>
-                         {!sheet.is_official && (
-                           <Badge color="yellow" variant="filled" size="sm">
-                             Unofficial
-                           </Badge>
-                         )}
-                         {sheet.questionTypes?.map((qt) => (
-                           <Badge
-                             key={qt}
-                             color={qt === 'mcq' ? 'blue' : 'orange'}
-                             variant="light"
-                             size="sm"
-                           >
-                             {qt === 'mcq' ? 'MCQ' : 'True/False'}
-                           </Badge>
-                         ))}
-                       </Group>
+                      <Group gap="xs">
+                        <Badge color={config?.color ?? 'teal'} variant="light" size="sm">
+                          {sheet.category}
+                        </Badge>
+                        {!sheet.is_official && (
+                          <Badge color="yellow" variant="filled" size="sm">
+                            Unofficial
+                          </Badge>
+                        )}
+                        {sheet.questionTypes?.map((qt) => (
+                          <Badge
+                            key={qt}
+                            color={qt === 'mcq' ? 'blue' : 'orange'}
+                            variant="light"
+                            size="sm"
+                          >
+                            {qt === 'mcq' ? 'MCQ' : 'True/False'}
+                          </Badge>
+                        ))}
+                      </Group>
                       <Text c="dimmed" size="xs" ta="center">
                         {!sheet.is_official
                           ? 'Practice questions — not included in Big Quiz'
