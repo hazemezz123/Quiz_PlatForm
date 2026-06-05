@@ -1,0 +1,214 @@
+[
+  {
+    "category": "Operating System",
+    "type": "mcq",
+    "question": "Which of the following are the four main components of a computer system?",
+    "options": [
+      "CPU, Memory, I/O devices, and Network",
+      "Hardware, Operating System, Application Programs, Users",
+      "Processor, RAM, Storage, Monitor",
+      "Software, Data, Users, Network"
+    ],
+    "answer": 1,
+    "explanation": "Correct answer is option b: Hardware, Operating System, Application Programs, Users",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "mcq",
+    "question": "The bootstrap program is typically stored in:",
+    "options": [
+      "Hard Disk",
+      "RAM",
+      "ROM or EPROM (firmware)",
+      "Cache Memory"
+    ],
+    "answer": 2,
+    "explanation": "Correct answer is option c: ROM or EPROM (firmware)",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "mcq",
+    "question": "From the user view, what is the main goal of an operating system on a personal computer?",
+    "options": [
+      "Maximize hardware resource utilization",
+      "Provide convenience, ease of use, and good performance",
+      "Manage user time sharing",
+      "Execute only system commands"
+    ],
+    "answer": 1,
+    "explanation": "Correct answer is option b: Provide convenience, ease of use, and good performance",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "mcq",
+    "question": "Which of the following is defined as \"the one program running at all times on the computer\" and is the core part of the operating system?",
+    "options": [
+      "Shell",
+      "Kernel",
+      "BIOS",
+      "Bootloader"
+    ],
+    "answer": 1,
+    "explanation": "Correct answer is option b: Kernel",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "mcq",
+    "question": "Which of the following is an example of a system program that is not part of the kernel?",
+    "options": [
+      "Kernel",
+      "Memory Manager",
+      "Shell (command interpreter)",
+      "CPU Scheduler"
+    ],
+    "answer": 2,
+    "explanation": "Correct answer is option c: Shell (command interpreter)",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "mcq",
+    "question": "Which of the following is an example of an application program?",
+    "options": [
+      "Linux Kernel",
+      "Windows Task Manager",
+      "Microsoft Word",
+      "Disk Defragmenter"
+    ],
+    "answer": 2,
+    "explanation": "Correct answer is option c: Microsoft Word",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "mcq",
+    "question": "Which of the following best explains why understanding the operating system is essential for writing high-performance user programs?",
+    "options": [
+      "The OS provides a graphical interface for debugging",
+      "The OS manages hardware resources; understanding it helps optimize program behavior, memory usage, and I/O",
+      "The OS compiles user programs into machine code",
+      "The OS replaces the need for hardware knowledge"
+    ],
+    "answer": 1,
+    "explanation": "Correct answer is option b: The OS manages hardware resources; understanding it helps optimize program behavior, memory usage, and I/O",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "mcq",
+    "question": "The bootstrap program is stored in firmware (ROM/EPROM) rather than on the hard disk primarily because:",
+    "options": [
+      "ROM is faster than hard disk",
+      "ROM retains data even when power is off and is available immediately at startup",
+      "Hard disks are not reliable during boot",
+      "ROM can be written easily by the user"
+    ],
+    "answer": 1,
+    "explanation": "Correct answer is option b: ROM retains data even when power is off and is available immediately at startup",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "mcq",
+    "question": "Which of the following statements about the Kernel is false?",
+    "options": [
+      "The kernel is the core part of the operating system",
+      "The kernel runs at all times on the computer",
+      "The kernel includes the Shell and system utilities",
+      "The kernel acts as a bridge between user applications and hardware"
+    ],
+    "answer": 2,
+    "explanation": "Correct answer is option c: The kernel includes the Shell and system utilities",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "mcq",
+    "question": "A system program is best defined as:",
+    "options": [
+      "A program written by the user to solve a specific problem",
+      "A program that is part of the kernel",
+      "A program associated with the OS but not necessarily part of the kernel",
+      "A program that compiles user code"
+    ],
+    "answer": 2,
+    "explanation": "Correct answer is option c: A program associated with the OS but not necessarily part of the kernel",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "truefalse",
+    "question": "Understanding hardware architecture and the operating system is essential for writing high-performance, reliable user programs.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "The correct answer is True.",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "truefalse",
+    "question": "The bootstrap program is stored on the hard disk and is loaded when the computer starts.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "The bootstrap program is stored in ROM/EPROM (firmware), not on the hard disk.",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "truefalse",
+    "question": "From the system view, the operating system acts as a resource allocator that manages resources like CPU time, memory space, and I/O devices.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "The correct answer is True.",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "truefalse",
+    "question": "The Shell is part of the kernel.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "The Shell is a system program associated with the OS but is not part of the kernel.",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "truefalse",
+    "question": "An Antivirus program is considered an application program.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "An Antivirus program is generally considered a system utility (system program), not a regular application program.",
+    "sheet": "Lecture 1"
+  },
+  {
+    "category": "Operating System",
+    "type": "truefalse",
+    "question": "The main goal of an operating system on a personal computer is to maximize resource utilization, even if it reduces convenience.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "The main goal is to provide convenience, ease of use, and good performance for the user.",
+    "sheet": "Lecture 1"
+  }
+]
