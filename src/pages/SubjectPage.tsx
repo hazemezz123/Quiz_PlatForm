@@ -24,6 +24,7 @@ import { useQuiz } from '../context/QuizContext'
 import { fetchSheets, fetchCategories } from '../lib/supabaseClient'
 import { getCategoryConfig, CategoryId, CATEGORY_IDS } from '../lib/categories'
 import { getDefinitionsForCategory, hasDefinitions, Definition } from '../lib/definitions'
+import { getComparisonsForCategory, hasComparisons, Comparison } from '../lib/comparisons'
 import { Sheet } from '../types'
 
 export function SubjectPage() {
@@ -46,6 +47,8 @@ export function SubjectPage() {
   // Definitions for this category
   const definitions = getDefinitionsForCategory(categoryId)
   const hasDefs = hasDefinitions(categoryId)
+  const comparisons = getComparisonsForCategory(categoryId)
+  const hasComps = hasComparisons(categoryId)
 
   // Filter definitions by search
   const filteredDefinitions = definitions.filter(
@@ -167,6 +170,11 @@ export function SubjectPage() {
               {hasDefs && (
                 <Badge color="blue" variant="light" size="md">
                   {definitions.length} Definitions
+                </Badge>
+              )}
+              {hasComps && (
+                <Badge color="grape" variant="light" size="md">
+                  {comparisons.length} Comparisons
                 </Badge>
               )}
             </Group>
@@ -364,6 +372,98 @@ export function SubjectPage() {
         </Stack>
       )}
 
+      {/* ─── Comparisons Section ─── */}
+      {hasComps && (
+        <Stack gap="md">
+          <Group gap="xs" justify="center">
+            <Box c="grape.4">
+              <FileText size={20} strokeWidth={1.5} />
+            </Box>
+            <Text fw={700} size="lg">
+              Comparison Tables
+            </Text>
+            <Badge color="grape" variant="light" size="sm">
+              {comparisons.length} comparisons
+            </Badge>
+          </Group>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+          >
+            <Accordion variant="separated" radius="md" chevronPosition="right">
+              {comparisons.map((comp: Comparison) => (
+                <Accordion.Item key={comp.title} value={comp.title}>
+                  <Accordion.Control>
+                    <Text fw={700} size="sm">
+                      {comp.title}
+                    </Text>
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <Stack gap="sm">
+                      {comp.similarities && comp.similarities.length > 0 && (
+                        <Box>
+                          <Text fw={600} size="sm" c="grape.4" mb={4}>
+                            Similarities
+                          </Text>
+                          {comp.similarities.map((s, i) => (
+                            <Text key={i} size="sm" mb={2}>
+                              • {s}
+                            </Text>
+                          ))}
+                        </Box>
+                      )}
+                      <ScrollArea>
+                        <Table
+                          highlightOnHover
+                          withTableBorder
+                          withColumnBorders
+                          withRowBorders
+                          striped
+                          style={{
+                            borderRadius: 'var(--mantine-radius-md)',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <Table.Thead>
+                            <Table.Tr>
+                              {comp.headers.map((h) => (
+                                <Table.Th key={h} style={{ textAlign: h === 'Feature' ? 'left' : 'center' }}>
+                                  <Text fw={700} size="xs" c="grape.4">
+                                    {h}
+                                  </Text>
+                                </Table.Th>
+                              ))}
+                            </Table.Tr>
+                          </Table.Thead>
+                          <Table.Tbody>
+                            {comp.rows.map((row) => (
+                              <Table.Tr key={row.feature}>
+                                <Table.Td>
+                                  <Text fw={600} size="sm">
+                                    {row.feature}
+                                  </Text>
+                                </Table.Td>
+                                {row.values.map((val, i) => (
+                                  <Table.Td key={i}>
+                                    <Text size="sm">{val}</Text>
+                                  </Table.Td>
+                                ))}
+                              </Table.Tr>
+                            ))}
+                          </Table.Tbody>
+                        </Table>
+                      </ScrollArea>
+                    </Stack>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              ))}
+            </Accordion>
+          </motion.div>
+        </Stack>
+      )}
+
       {/* ─── Definitions Section ─── */}
       {hasDefs && (
         <Stack gap="md">
@@ -492,7 +592,7 @@ export function SubjectPage() {
       )}
 
       {/* ─── No content available ─── */}
-      {!hasQuestions && categorySheets.length === 0 && !hasDefs && (
+      {!hasQuestions && categorySheets.length === 0 && !hasDefs && !hasComps && (
         <Stack align="center" gap="md" py="xl">
           <Box c="dimmed">
             <Icon size={48} strokeWidth={1.5} />
