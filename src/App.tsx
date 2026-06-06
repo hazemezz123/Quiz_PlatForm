@@ -14,7 +14,7 @@ const Result = lazy(() => import('./pages/Result').then((m) => ({ default: m.Res
 const Leaderboard = lazy(() =>
   import('./pages/Leaderboard').then((m) => ({ default: m.Leaderboard })),
 )
-const Admin = lazy(() => import('./pages/Admin').then((m) => ({ default: m.Admin })))
+const Admin = lazy(() => import('./pages/admin/Admin').then((m) => ({ default: m.Admin })))
 const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })))
 const SubjectPage = lazy(() =>
   import('./pages/SubjectPage').then((m) => ({ default: m.SubjectPage })),

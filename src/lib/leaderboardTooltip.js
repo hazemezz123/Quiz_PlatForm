@@ -20,5 +20,7 @@ export function buildUserQuizTooltip(rows) {
       if (b[1].score !== a[1].score) return b[1].score - a[1].score
       return a[0].localeCompare(b[0])
     })
-    .map(([quizName, row]) => `${quizName}: ${row.score}/${row.total_questions} (${row.percentage}%)`)
+    .map(
+      ([quizName, row]) => `${quizName}: ${row.score}/${row.total_questions} (${row.percentage}%)`,
+    )
 }
