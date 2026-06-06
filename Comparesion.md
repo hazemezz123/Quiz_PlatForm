@@ -173,7 +173,7 @@
 
 | Feature        | Process                          | Thread                                      |
 | -------------- | -------------------------------- | ------------------------------------------- |
-| Definition     | Independent program in execution | Lightweight execution unit within a process |
+| Definition     | Independent program  in execution | Lightweight execution unit within a process | 
 | Memory         | Own private memory               | Shares memory with other threads            |
 | Resource Usage | Higher                           | Lower                                       |
 
