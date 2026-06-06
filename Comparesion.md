@@ -2,11 +2,12 @@
 
 ## System Program vs. Application Program
 
-| Feature    | System Program                                                | Application Program                                                      |
-| ---------- | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Definition | Associated with the OS but not necessarily part of the kernel | Defines how system resources are used to solve users' computing problems |
-| Purpose    | Supports system operation and management                      | Performs tasks for end users                                             |
-| Examples   | Shell, Antivirus, Firewall, Disk Utilities                    | MS Word, Web Browsers, Video Games                                       |
+| Feature    | System Program                                                | Application Program                                                       |
+| ---------- | ------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Definition | Associated with the OS but not necessarily part of the kernel | all programs not associated with the operating system as MS word, excel,… |
+
+| Purpose | Supports system operation and management | Performs tasks for end users |
+| Examples | Shell, Antivirus, Firewall, Disk Utilities | MS Word, Web Browsers, Video Games |
 
 ---
 
@@ -173,7 +174,7 @@
 
 | Feature        | Process                          | Thread                                      |
 | -------------- | -------------------------------- | ------------------------------------------- |
-| Definition     | Independent program  in execution | Lightweight execution unit within a process | 
+| Definition     | Independent program in execution | Lightweight execution unit within a process |
 | Memory         | Own private memory               | Shares memory with other threads            |
 | Resource Usage | Higher                           | Lower                                       |
 
